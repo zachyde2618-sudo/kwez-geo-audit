@@ -9,11 +9,11 @@ Handover notes for continuing the build. The full product brief was given in the
 | 1. Scaffold, config, input form, check registry (all 72 checks), Zod schemas | Done |
 | 2. Polite crawler + automated checks (categories 1, 2, 5, automated parts of 6 and 8), form prefill, fixture site e2e | Done |
 | 3. Scoring engine (tested), animated ScoreGauge, category bars, prioritised to-do list, results layout | Done |
-| 4. LLM checks: categories 3, 4, 7 + LLM parts of 1.2, 1.3, 1.4, 2.3, 2.4, 2.13, 6.3, 6.5, 6.8, 7.2, 7.6, 8.1, 8.5, 9.5, 9.7, 9.9 | **Next** |
-| 5. External checks: PageSpeed, web search, review URLs, Companies House, AI visibility prompt runner (9.10–9.13), share of voice, cited domains | To do |
+| 4. LLM checks: categories 3, 4, 7 + LLM parts of 1.2, 1.3, 1.4, 2.3, 2.4, 2.13, 6.3, 6.5, 6.8, 7.2, 7.6, 8.1, 8.5, 9.5, 9.7, 9.9 | Done (9.5/9.7/9.9 judges built; their sources arrive in Phase 5) |
+| 5. External checks: PageSpeed, web search, review URLs, Companies House, AI visibility prompt runner (9.10–9.13), share of voice, cited domains | **Next** |
 | 6. Polish: past audits compare, print report (A4), CSV/JSON export, error/loading states, README | To do |
 
-Run: `npm install`, `npm run dev`. Tests: `npm test` (105 passing). Demo site: `npm run fixture` (port 4010), then audit `http://localhost:4010` with `ALLOW_LOCAL_TARGETS=true`.
+Run: `npm install`, `npm run dev`. Tests: `npm test` (129 passing). Demo site: `npm run fixture` (port 4010), then audit `http://localhost:4010` with `ALLOW_LOCAL_TARGETS=true`.
 
 ## Decisions agreed with the owner
 
@@ -27,6 +27,18 @@ Run: `npm install`, `npm run dev`. Tests: `npm test` (105 passing). Demo site: `
 - **Added `COMPANIES_HOUSE_API_KEY`** (free) to the env list.
 - Google reviews / Google Business Profile are recorded but never scraped; LinkedIn is never scraped.
 - A robots.txt network error is Unable to Verify, not Fail; only HTTP 5xx counts as disallow-all.
+
+## Phase 4: how the AI review works
+
+- `src/lib/llm/client.ts`: official `@anthropic-ai/sdk`, `client.beta.messages.create` with structured outputs (`output_config.format` JSON schema), effort `medium`, server-side refusal fallback (`fallbacks: "default"`). Explicit `baseURL` from config so a stray `ANTHROPIC_BASE_URL` can't redirect traffic. Enforces `maxTokensPerAudit` before every request (conservative ~3 chars/token input estimate + `max_tokens` sized to what's left), retries invalid output with feedback up to `maxRetriesOnInvalidOutput`, logs a `CostEntry` per call (retries included) into `audit.costs`.
+- `src/lib/llm/quotes.ts`: quotes must appear verbatim in the text sent; only whitespace, quote-mark, dash, NBSP and ellipsis-character differences are tolerated.
+- `src/lib/llm/rubrics.ts`: one criterion per check ID with pass/partial/fail definitions, a `mode` and a code-owned fix text. `worst` criteria (looking for problems) must quote the problem on Fail/Partial; `best` criteria (looking for good things) must quote it on Pass/Partial. Four groups (answers, trust, data, FAQ), one request per group per chunk.
+- `src/lib/llm/review.ts`: chunks page text (`config.llm.chunkChars`), runs groups with `config.llm.concurrency`, aggregates chunk verdicts in code (worst/best), records failures per criterion. Pipeline stage 3 in `pipeline.ts`; summary saved in `extras.aiReview` and shown on the results page (model, requests, tokens, est. cost).
+- A+L checks (1.4, 2.13, 3.4, 3.5, 4.4, 6.8, 7.2) = automated part + AI part, worse part decides; if the AI part can't run, the automated part stands with a note. 7.6 dates the pages the AI quoted as original data (7.1).
+- `src/lib/llm/external.ts` + `cat9.ts`: AI judges for 9.5/9.7/9.9 over `ctx.data.external` sources. **Phase 5 must** gather `mentions`/`reviews`, call `runExternalReview`, and put the result in `ctx.data.external.judgements` (and `.model`).
+- Tests use `setLlmTransportForTests` (no network). `tests/llm-e2e.test.ts` runs the fixture site with a fake model, including a fabricated-quote case.
+- Pricing in config updated to Sonnet 5.5 ($2 / $10 per MTok).
+- A Claude API key can't be stored as a cloud-environment network secret (Anthropic's own host); for cloud sessions it must be an environment variable `ANTHROPIC_API_KEY` in the environment settings.
 
 ## Phase 4 requirements (from the brief)
 

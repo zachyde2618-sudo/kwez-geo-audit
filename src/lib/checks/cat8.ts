@@ -3,6 +3,7 @@ import { classifyRole } from "@/lib/crawler/extract";
 import type { CrawlData, PageData } from "@/lib/crawler/types";
 import type { Evidence } from "@/lib/schemas/check";
 import { ev, isResult, needCrawl, okPages, relPath } from "./helpers";
+import { judgementResult, llmCheck } from "./llm";
 import type { CheckImpl, PageSnapshot } from "./types";
 import { unable } from "./types";
 
@@ -154,4 +155,10 @@ const c84: CheckImpl = (ctx) => {
   return unable("No pages changed their date since the last audit, so there's nothing to compare yet.", "", { evidence, method: "automated" });
 };
 
-export const cat8: Record<string, CheckImpl> = { "8.2": c82, "8.3": c83, "8.4": c84 };
+/** 8.1 is L+E: the AI checks on-site accuracy and consistency now; external verification is added in Phase 5. */
+const c81: CheckImpl = (ctx) => {
+  const r = judgementResult(ctx, "8.1");
+  return { ...r, notes: [...(r.notes ?? []), "Checked for accuracy and consistency across your own pages. Comparison with external listings is added in build phase 5."] };
+};
+
+export const cat8: Record<string, CheckImpl> = { "8.1": c81, "8.2": c82, "8.3": c83, "8.4": c84, "8.5": llmCheck("8.5") };

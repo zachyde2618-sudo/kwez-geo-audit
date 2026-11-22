@@ -2,6 +2,7 @@ import { wordCount } from "@/lib/crawler/extract";
 import type { PageData } from "@/lib/crawler/types";
 import type { Evidence } from "@/lib/schemas/check";
 import { allJsonLdNodes, asArray, ev, isOrgType, isResult, listSome, needCrawl, norm, okPages, relPath, sameUrl, stringsIn } from "./helpers";
+import { judgementResult, llmCheck, withAiPart } from "./llm";
 import type { CheckImpl } from "./types";
 import { unable } from "./types";
 
@@ -266,15 +267,19 @@ const c68: CheckImpl = (ctx) => {
   }
   const evidence = [...found.values()];
   const kinds = [...found.keys()];
-  const notes = ["Whether this evidence is specific and verifiable is assessed by the AI review in build phase 4."];
-  if (kinds.length >= 2) return { status: "pass", evidence, notes: [`Found: ${kinds.join(", ")}.`, ...notes] };
+  if (kinds.length >= 2) return { status: "pass", evidence, notes: [`Found: ${kinds.join(", ")}.`] };
   return {
     status: "fail",
     evidence: evidence.length ? evidence : [ev.measure("Credibility evidence", `No case studies, testimonials, awards, accreditations or press found on ${pages.length} crawled pages`)],
     issue: kinds.length ? `Your site shows only one type of proof (${kinds[0]}).` : "Your site doesn't show proof of your track record.",
     requiredChange: "Add at least two kinds of proof: case studies with results, named client testimonials, accreditations and memberships, awards or press coverage, each linked to its source.",
-    notes,
   };
 };
 
-export const cat6: Record<string, CheckImpl> = { "6.1": c61, "6.4": c64, "6.6": c66, "6.7": c67, "6.8": c68 };
+/** 6.3 is L+E: the AI checks whether claims are backed on the site; independent confirmation is check 9.9 (Phase 5). */
+const c63: CheckImpl = (ctx) => {
+  const r = judgementResult(ctx, "6.3");
+  return { ...r, notes: [...(r.notes ?? []), "Checked against evidence on your own site. Whether third parties confirm your claims is check 9.9."] };
+};
+
+export const cat6: Record<string, CheckImpl> = { "6.1": c61, "6.3": c63, "6.4": c64, "6.5": llmCheck("6.5"), "6.6": c66, "6.7": c67, "6.8": withAiPart("6.8", c68) };

@@ -3,9 +3,13 @@ import { CheckResult, MAX_SNIPPET_CHARS, type Evidence } from "@/lib/schemas/che
 import { CHECKS, type CheckMeta } from "./catalogue";
 import { cat1 } from "./cat1";
 import { cat2 } from "./cat2";
+import { cat3 } from "./cat3";
+import { cat4 } from "./cat4";
 import { cat5 } from "./cat5";
 import { cat6 } from "./cat6";
+import { cat7 } from "./cat7";
 import { cat8 } from "./cat8";
+import { cat9 } from "./cat9";
 import { manualChecks } from "./manual";
 import type { CheckContext, CheckImpl, RawCheckResult } from "./types";
 
@@ -14,9 +18,13 @@ const IMPLEMENTATIONS: Record<string, CheckImpl> = {
   ...manualChecks,
   ...cat1,
   ...cat2,
+  ...cat3,
+  ...cat4,
   ...cat5,
   ...cat6,
+  ...cat7,
   ...cat8,
+  ...cat9,
 };
 
 export function getImplementation(id: string): CheckImpl | undefined {

@@ -1,6 +1,8 @@
 import type { AuditInput } from "@/lib/schemas/input";
 import type { CheckStatus, Effort, Evidence, Impact, Method } from "@/lib/schemas/check";
 import type { CrawlData } from "@/lib/crawler/types";
+import type { ExternalData } from "@/lib/llm/external";
+import type { SiteReview } from "@/lib/llm/review";
 
 export interface PageSnapshot {
   url: string;
@@ -31,6 +33,12 @@ export interface CheckContext {
     crawl?: CrawlData;
     crawlError?: string;
     previous?: PreviousAudit;
+    /** AI review of the crawled pages (Phase 4). Missing when no key or no pages. */
+    llm?: SiteReview;
+    /** Why the AI review didn't run, when it was attempted. */
+    llmError?: string;
+    /** Third-party texts with AI judgements on them (collected in Phase 5). */
+    external?: ExternalData;
   };
 }
 

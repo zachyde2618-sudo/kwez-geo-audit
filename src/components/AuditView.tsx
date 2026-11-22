@@ -138,6 +138,7 @@ function Results({ audit }: { audit: AuditRecord }) {
               <p className="mt-1 text-sm text-ink-soft">
                 {audit.domain} · audited {formatDate(audit.createdAt)}
               </p>
+              <AiCostLine audit={audit} />
             </div>
             <p className="font-mono text-sm" data-testid="score-line">{formatScoreLine(s)}</p>
             {s.band && <p className="text-ink-soft max-w-prose">{BAND_SUMMARY[s.band]}</p>}
@@ -194,6 +195,18 @@ function SectionHeading({ id, title, sub }: { id: string; title: string; sub?: s
       <h2 id={id} className="text-2xl font-semibold tracking-tight">{title}</h2>
       {sub && <p className="mt-1 text-sm text-ink-soft">{sub}</p>}
     </div>
+  );
+}
+
+/** Model, token use and estimated cost of the AI review (estimates from config prices, not invoices). */
+function AiCostLine({ audit }: { audit: AuditRecord }) {
+  const ai = audit.extras.aiReview as { model: string; calls: number; tokensUsed: number } | undefined;
+  if (!ai) return null;
+  const usd = audit.costs.filter((c) => c.provider === "anthropic").reduce((t, c) => t + c.usd, 0);
+  return (
+    <p className="mt-1 text-xs text-ink-soft" data-testid="ai-cost">
+      AI review: {ai.model}, {ai.calls} request{ai.calls === 1 ? "" : "s"}, {ai.tokensUsed.toLocaleString("en-GB")} tokens, about ${usd.toFixed(2)}
+    </p>
   );
 }
 

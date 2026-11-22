@@ -114,15 +114,23 @@ export const config = {
 
   /** LLM used for qualitative (L) checks. */
   llm: {
-    endpoint: "https://api.anthropic.com/v1/messages",
-    anthropicVersion: "2023-06-01",
+    /** Base URL for the official Anthropic SDK (it appends /v1/messages). Set explicitly so an
+     *  ANTHROPIC_BASE_URL in the server's environment can't silently redirect audit traffic. */
+    baseUrl: "https://api.anthropic.com",
     get judgeModel() {
       return env("ANTHROPIC_JUDGE_MODEL") ?? "claude-sonnet-5-5";
     },
-    maxOutputTokensPerCall: 2_000,
-    /** Hard cap across a whole audit (input + output). */
+    /** Reasoning effort for judgements. Thinking tokens count towards maxOutputTokensPerCall. */
+    effort: "medium" as "low" | "medium" | "high",
+    maxOutputTokensPerCall: 8_000,
+    /** Hard cap across a whole audit (input + output, all calls and retries). */
     maxTokensPerAudit: 400_000,
     maxRetriesOnInvalidOutput: 2,
+    /** Page text is sent in chunks of at most this many characters (~4 chars per token). */
+    chunkChars: 48_000,
+    /** Parallel requests during the AI review stage. */
+    concurrency: 3,
+    requestTimeoutMs: 120_000,
   },
 
   /** AI visibility tests (9.10–9.13). */
@@ -191,7 +199,8 @@ export const config = {
    * before a run. Check providers' pricing pages; these are estimates, not invoices.
    */
   pricingUsdPerMTok: {
-    anthropic: { input: 3, output: 15 },
+    /** Claude Sonnet 5.5 (the default judge and visibility model). */
+    anthropic: { input: 2, output: 10 },
     openai: { input: 1.25, output: 10 },
     gemini: { input: 0.3, output: 2.5 },
     perplexity: { input: 1, output: 1, perRequest: 0.005 },

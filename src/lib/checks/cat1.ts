@@ -2,6 +2,7 @@ import { config } from "@/config";
 import { describeDecision, isAllowed, pathOf } from "@/lib/crawler/robots";
 import type { CrawlData, PageData } from "@/lib/crawler/types";
 import type { Evidence } from "@/lib/schemas/check";
+import { llmCheck, withAiPart } from "./llm";
 import { ev, fmtBytes, homePage, isResult, keyPages, listSome, needCrawl, relPath } from "./helpers";
 import type { CheckImpl, RawCheckResult } from "./types";
 import { unable } from "./types";
@@ -152,7 +153,6 @@ const c14: CheckImpl = (ctx) => {
   for (const d of keyDocs.slice(0, 5)) evidence.push(ev.url(`Key information in a document ("${d.text || "link"}")`, d.url));
   if (keyDocs.length) problems.push(`${keyDocs.length} key document(s) such as price lists or brochures are only available as PDFs or files`);
 
-  const notes = ["Whether key facts are hidden in images or tabs is judged by the AI review in a later stage."];
   if (problems.length) {
     return {
       status: "fail",
@@ -160,10 +160,9 @@ const c14: CheckImpl = (ctx) => {
       issue: `Key facts are hard to reach: ${problems.join("; ")}.`,
       requiredChange: "Link your About, Services and Contact pages from the homepage menu, and put prices or service details from PDFs into normal web pages.",
       pages: [...pages, ...keyDocs.map((d) => d.from)],
-      notes,
     };
   }
-  return { status: "pass", evidence, notes };
+  return { status: "pass", evidence };
 };
 
 /** Key pages whose raw HTML is an empty JavaScript app shell. */
@@ -329,4 +328,4 @@ const c17: CheckImpl = (ctx) => {
   return { status: "pass", evidence, notes };
 };
 
-export const cat1: Record<string, CheckImpl> = { "1.1": c11, "1.4": c14, "1.5": c15, "1.6": c16, "1.7": c17 };
+export const cat1: Record<string, CheckImpl> = { "1.1": c11, "1.2": llmCheck("1.2"), "1.3": llmCheck("1.3"), "1.4": withAiPart("1.4", c14), "1.5": c15, "1.6": c16, "1.7": c17 };

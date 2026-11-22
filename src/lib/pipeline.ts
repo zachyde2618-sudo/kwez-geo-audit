@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { API_KEY_NAMES, hasKey } from "@/config";
+import { API_KEY_NAMES, config, hasKey } from "@/config";
 import { CATEGORIES, CHECKS } from "@/lib/checks/catalogue";
 import { snapshotPages } from "@/lib/checks/cat8";
 import { runCheck } from "@/lib/checks/registry";
 import type { CheckContext, PageSnapshot, PreviousAudit } from "@/lib/checks/types";
 import { crawlSite } from "@/lib/crawler/crawl";
 import type { CrawlData } from "@/lib/crawler/types";
+import { LlmClient } from "@/lib/llm/client";
+import { runSiteReview, type SiteReview } from "@/lib/llm/review";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import type { AuditInput } from "@/lib/schemas/input";
 import { computeScore } from "@/lib/scoring";
@@ -86,7 +88,28 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
       progress(`Crawl failed: ${ctx.data.crawlError}`);
     }
     ctx.data.previous = await loadPrevious(record);
-    // Later phases insert LLM and external stages here.
+
+    // Stage 3: AI review of page text (LLM-judged checks). Skipped without a key or pages.
+    if (hasKey("ANTHROPIC_API_KEY") && ctx.data.crawl?.pages.length) {
+      signal.throwIfAborted();
+      const client = new LlmClient({
+        onCost: (c) => {
+          record.costs.push(c);
+          void persist();
+        },
+      });
+      try {
+        ctx.data.llm = await runSiteReview({ crawl: ctx.data.crawl, input: record.input, client, signal, progress, concurrency: config.llm.concurrency });
+        record.extras.aiReview = aiReviewSummary(ctx.data.llm);
+        const usd = record.costs.filter((c) => c.provider === "anthropic").reduce((t, c) => t + c.usd, 0);
+        progress(`AI review complete: ${ctx.data.llm.calls} request(s), ${ctx.data.llm.tokensUsed.toLocaleString("en-GB")} tokens, about $${usd.toFixed(2)}`);
+      } catch (err) {
+        if (signal.aborted) throw err;
+        ctx.data.llmError = err instanceof Error ? err.message : String(err);
+        progress(`AI review failed: ${ctx.data.llmError}`);
+      }
+    }
+    // Phase 5 inserts the external stage here.
 
     for (const cat of CATEGORIES) {
       signal.throwIfAborted();
@@ -137,6 +160,18 @@ export function crawlSummary(c: CrawlData) {
     botProbes: c.botProbes,
     renders: c.renders,
     renderError: c.renderError,
+  };
+}
+
+/** What the AI saw and concluded, saved with the audit for transparency (quotes are verified). */
+export function aiReviewSummary(r: SiteReview) {
+  return {
+    model: r.model,
+    calls: r.calls,
+    tokensUsed: r.tokensUsed,
+    reviewedPages: r.reviewedPages,
+    skippedPages: r.skippedPages,
+    judgements: Object.values(r.judgements).map((j) => ({ id: j.id, status: j.verdict?.status ?? "error", error: j.error, incomplete: j.incomplete, chunks: j.chunks, finding: j.verdict?.finding, quotes: j.verdict?.quotes })),
   };
 }
 

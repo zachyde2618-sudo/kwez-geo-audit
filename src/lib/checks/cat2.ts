@@ -3,6 +3,7 @@ import { typesOf } from "@/lib/crawler/extract";
 import { imageFormat } from "@/lib/crawler/imageSize";
 import type { AssetInfo, ImageRef, PageData } from "@/lib/crawler/types";
 import type { Evidence } from "@/lib/schemas/check";
+import { llmCheck, withAiPart } from "./llm";
 import { ev, findFaq, fmtBytes, homePage, isResult, keyPages, listSome, needCrawl, okPages, relPath } from "./helpers";
 import type { CheckImpl } from "./types";
 import { unable } from "./types";
@@ -239,7 +240,6 @@ const c213: CheckImpl = (ctx) => {
   const evidence: Evidence[] = [ev.measure("Alt text", `${content.length} content images: ${missing.length} with no alt text, ${weak.length} with unhelpful alt text`)];
   for (const { i, p } of missing.slice(0, 4)) evidence.push(ev.measure(`No alt text on ${relPath(p.finalUrl)}`, relPath(i.src), i.src));
   for (const { i, p } of weak.slice(0, 4)) evidence.push(ev.snippet(`Unhelpful alt text on ${relPath(p.finalUrl)}`, i.alt ?? "", p.finalUrl));
-  const notes = ["Whether key facts appear only inside images is judged by the AI review in build phase 4."];
   if (bad.length && bad.length / content.length > 0.2) {
     return {
       status: "fail",
@@ -247,10 +247,9 @@ const c213: CheckImpl = (ctx) => {
       issue: `${bad.length} of ${content.length} images have missing or unhelpful descriptions, so AI can't tell what they show.`,
       requiredChange: 'Give every meaningful image a short, specific alt text (e.g. "Electrician fitting an EV charger in a Leeds driveway"), and use alt="" only for purely decorative images.',
       pages: [...new Set(bad.map(({ p }) => p.finalUrl))],
-      notes,
     };
   }
-  return { status: "pass", evidence, notes };
+  return { status: "pass", evidence };
 };
 
 const c214: CheckImpl = (ctx) => {
@@ -281,6 +280,8 @@ const c214: CheckImpl = (ctx) => {
 
 export const cat2: Record<string, CheckImpl> = {
   "2.2": c22,
+  "2.3": llmCheck("2.3"),
+  "2.4": llmCheck("2.4"),
   "2.5": c25,
   "2.6": c26,
   "2.7": c27,
@@ -288,6 +289,6 @@ export const cat2: Record<string, CheckImpl> = {
   "2.10": c210,
   "2.11": c211,
   "2.12": c212,
-  "2.13": c213,
+  "2.13": withAiPart("2.13", c213),
   "2.14": c214,
 };

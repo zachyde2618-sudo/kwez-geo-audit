@@ -12,6 +12,7 @@
     "fixture": "node fixtures/server.mjs 4010"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0",
     "cheerio": "^1.2.0",
     "next": "16.4.6",
     "react": "19.3.0",
