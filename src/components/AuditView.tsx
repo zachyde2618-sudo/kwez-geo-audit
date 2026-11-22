@@ -145,6 +145,7 @@ function Results({ audit }: { audit: AuditRecord }) {
               </p>
               <AiCostLine audit={audit} />
             </div>
+            <AiReviewWarning audit={audit} />
             <p className="font-mono text-sm" data-testid="score-line">{formatScoreLine(s)}</p>
             {s.band && <p className="text-ink-soft max-w-prose">{BAND_SUMMARY[s.band]}</p>}
             {s.provisional && (
@@ -212,6 +213,29 @@ function AiCostLine({ audit }: { audit: AuditRecord }) {
     <p className="mt-1 text-xs text-ink-soft" data-testid="ai-cost">
       AI review: {ai.model}, {ai.calls} request{ai.calls === 1 ? "" : "s"}, {ai.tokensUsed.toLocaleString("en-GB")} tokens, about ${usd.toFixed(2)}
     </p>
+  );
+}
+
+/** Explain plainly when the AI review failed, since it takes ~20 checks down with it. */
+function AiReviewWarning({ audit }: { audit: AuditRecord }) {
+  const ai = audit.extras.aiReview as { calls: number; judgements?: { error?: string }[] } | undefined;
+  const firstError = ai?.judgements?.find((j) => j.error)?.error;
+  if (!ai || !firstError || ai.calls > 0) return null;
+  const affected = ai.judgements!.filter((j) => j.error).length;
+  const authProblem = /\b401\b|authentication|invalid bearer|x-api-key|api key/i.test(firstError);
+  const credit = /credit balance|billing/i.test(firstError);
+  return (
+    <div role="alert" className="rounded-xl border border-fail/30 bg-fail-soft px-4 py-3 text-sm text-left text-fail">
+      <p>
+        <strong>The AI review didn&rsquo;t run, so {affected} checks couldn&rsquo;t be assessed.</strong>{" "}
+        {authProblem
+          ? "Anthropic rejected the API key. Check ANTHROPIC_API_KEY is just the key (it starts with sk-ant-), restart the app and run the audit again."
+          : credit
+            ? "The Anthropic account is out of credit. Top it up in the Anthropic Console, then run the audit again."
+            : "Run the audit again; if it keeps failing, check the Anthropic API key and account."}
+      </p>
+      <p className="mt-1 break-words font-mono text-xs opacity-80">{firstError.slice(0, 200)}</p>
+    </div>
   );
 }
 

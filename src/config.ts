@@ -39,7 +39,26 @@ export const API_KEY_ENV_VARS: string[] = API_KEY_NAMES.flatMap((k) => [k, ...(K
  * through here, so fallbacks apply everywhere.
  */
 export function getKey(name: ApiKeyName): string | undefined {
-  return env(name) ?? KEY_FALLBACKS[name]?.map(env).find((v) => v !== undefined);
+  const raw = env(name) ?? KEY_FALLBACKS[name]?.map(env).find((v) => v !== undefined);
+  return raw === undefined ? undefined : cleanKey(raw);
+}
+
+/**
+ * Undo common copy-paste mistakes in a key's value: the whole "NAME=value" line pasted as the
+ * value (e.g. "KWEZ_ANTHROPIC_API_KEY=sk-ant-…"), surrounding quotes, or a "Bearer " prefix.
+ */
+export function cleanKey(value: string): string | undefined {
+  let v = value.trim();
+  for (let i = 0; i < 3; i++) {
+    const before = v;
+    v = v
+      .replace(/^(?:export\s+)?[A-Z][A-Z0-9_]*\s*=\s*/, "")
+      .replace(/^(["'`])(.*)\1$/, "$2")
+      .replace(/^Bearer\s+/i, "")
+      .trim();
+    if (v === before) break;
+  }
+  return v || undefined;
 }
 export function hasKey(name: ApiKeyName): boolean {
   return getKey(name) !== undefined;
