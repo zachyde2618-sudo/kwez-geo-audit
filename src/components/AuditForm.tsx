@@ -35,6 +35,34 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  const [prefilling, setPrefilling] = useState(false);
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [prefillError, setPrefillError] = useState("");
+
+  async function prefill() {
+    setPrefilling(true);
+    setPrefillError("");
+    setSuggestion(null);
+    try {
+      const res = await fetch("/api/prefill", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+      const data = await res.json();
+      if (!res.ok) setPrefillError(data.error ?? "Couldn't read the website.");
+      else setSuggestion(data);
+    } catch {
+      setPrefillError("Couldn't reach the server.");
+    }
+    setPrefilling(false);
+  }
+
+  function applySuggestion(s: Suggestion) {
+    if (s.companyName && !companyName) setCompanyName(s.companyName);
+    if (s.industry && !industry) setIndustry(s.industry);
+    if (s.town && !town) setTown(s.town);
+    if (s.country && country === "United Kingdom") setCountry(s.country);
+    if (s.socialUrls.length) setSocialUrls([...new Set([...splitList(socialUrls), ...s.socialUrls])].join(", "));
+    if (s.people.length && !people.length) setPeople(s.people.map((p) => ({ ...p, otherUrls: "" })));
+    setSuggestion(null);
+  }
 
   const aiKeys = ["OPENAI_API_KEY", "GEMINI_API_KEY", "PERPLEXITY_API_KEY", "ANTHROPIC_API_KEY"].filter((k) => keysConfigured.includes(k));
 
@@ -101,6 +129,13 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
         <Field label="Website address" required help="We crawl up to 25 pages from here, politely and at one request per second." error={errors["url"]}>
           {(p) => <input {...p} className="field-input text-lg" type="text" inputMode="url" autoComplete="url" placeholder="example.co.uk" value={url} onChange={(e) => setUrl(e.target.value)} />}
         </Field>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={prefill} disabled={!url.trim() || prefilling} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent disabled:opacity-50">
+            {prefilling ? "Reading the website…" : "Fill in details from the website"}
+          </button>
+          <span className="text-xs text-ink-soft">{prefillError || "Optional. We read the homepage and About page and show you what we found before using it."}</span>
+        </div>
+        {suggestion && <PrefillPanel s={suggestion} onUse={() => applySuggestion(suggestion)} onDismiss={() => setSuggestion(null)} />}
       </Section>
 
       <Section title="About the business" subtitle="Recommended. These shape the questions we test AI assistants with.">
@@ -222,6 +257,52 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
         </button>
       </div>
     </form>
+  );
+}
+
+interface Suggestion {
+  companyName?: string;
+  industry?: string;
+  town?: string;
+  country?: string;
+  socialUrls: string[];
+  people: { fullName: string; jobTitle: string; linkedinUrl: string }[];
+  sources: string[];
+}
+
+function PrefillPanel({ s, onUse, onDismiss }: { s: Suggestion; onUse: () => void; onDismiss: () => void }) {
+  const rows: [string, string][] = [];
+  if (s.companyName) rows.push(["Company name", s.companyName]);
+  if (s.industry) rows.push(["Industry", s.industry]);
+  if (s.town) rows.push(["Town", s.town]);
+  if (s.country) rows.push(["Country", s.country]);
+  for (const p of s.people) rows.push(["Person", [p.fullName, p.jobTitle, p.linkedinUrl].filter(Boolean).join(" · ")]);
+  for (const u of s.socialUrls) rows.push(["Social profile", u]);
+  return (
+    <div role="region" aria-label="Details found on the website" className="rounded-xl border border-accent/30 bg-accent-soft/50 p-4 space-y-3">
+      <p className="text-sm font-medium">{rows.length ? "We found these on the website. Check them before using:" : "We couldn't find any details to pre-fill."}</p>
+      {rows.length > 0 && (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+          {rows.map(([k, v], i) => (
+            <div key={i} className="contents">
+              <dt className="text-ink-soft">{k}</dt>
+              <dd className="break-all">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {s.sources.length > 0 && <p className="text-xs text-ink-soft">Sources: {s.sources.join("; ")}.</p>}
+      <div className="flex gap-3">
+        {rows.length > 0 && (
+          <button type="button" onClick={onUse} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white">
+            Use these (empty fields only)
+          </button>
+        )}
+        <button type="button" onClick={onDismiss} className="rounded-lg px-3 py-2 text-sm text-ink-soft hover:text-ink">
+          Dismiss
+        </button>
+      </div>
+    </div>
   );
 }
 

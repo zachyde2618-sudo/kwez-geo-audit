@@ -1,12 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { API_KEY_NAMES, hasKey } from "@/config";
 import { CATEGORIES, CHECKS } from "@/lib/checks/catalogue";
+import { snapshotPages } from "@/lib/checks/cat8";
 import { runCheck } from "@/lib/checks/registry";
-import type { CheckContext } from "@/lib/checks/types";
+import type { CheckContext, PageSnapshot, PreviousAudit } from "@/lib/checks/types";
+import { crawlSite } from "@/lib/crawler/crawl";
+import type { CrawlData } from "@/lib/crawler/types";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import type { AuditInput } from "@/lib/schemas/input";
 import { computeScore } from "@/lib/scoring";
-import { loadAudit, saveAudit } from "@/lib/storage";
+import { listAudits, loadAudit, saveAudit } from "@/lib/storage";
 
 /** In-memory registry of running audits. Survives Next dev hot reloads via globalThis. */
 const g = globalThis as unknown as { __kwezJobs?: Map<string, AbortController> };
@@ -71,7 +74,20 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
   const ctx: CheckContext = { input: record.input, signal, progress, data: {} };
 
   try {
-    // Later phases insert stages here: discover → fetch → LLM → external.
+    // Stage 1–2: discover and fetch
+    try {
+      ctx.data.crawl = await crawlSite(record.input, signal, progress);
+      record.extras.crawlSummary = crawlSummary(ctx.data.crawl);
+      record.extras.pageSnapshots = snapshotPages(ctx.data.crawl);
+      progress(`Crawled ${ctx.data.crawl.pages.length} page(s)`);
+    } catch (err) {
+      if (signal.aborted) throw err;
+      ctx.data.crawlError = err instanceof Error ? err.message : String(err);
+      progress(`Crawl failed: ${ctx.data.crawlError}`);
+    }
+    ctx.data.previous = await loadPrevious(record);
+    // Later phases insert LLM and external stages here.
+
     for (const cat of CATEGORIES) {
       signal.throwIfAborted();
       progress(`Running checks: ${cat.name}…`);
@@ -96,6 +112,32 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
   }
   await persist();
   return record;
+}
+
+async function loadPrevious(record: AuditRecord): Promise<PreviousAudit | undefined> {
+  const prior = (await listAudits()).find((a) => a.domain === record.domain && a.id !== record.id && a.status === "complete" && a.createdAt < record.createdAt);
+  if (!prior) return undefined;
+  const rec = await loadAudit(prior.id);
+  const snapshots = rec?.extras.pageSnapshots as PageSnapshot[] | undefined;
+  return rec && snapshots ? { id: rec.id, createdAt: rec.createdAt, snapshots } : undefined;
+}
+
+/** Compact, JSON-safe crawl summary saved with the audit (no page bodies). */
+export function crawlSummary(c: CrawlData) {
+  return {
+    origin: c.origin,
+    robots: { url: c.robots.url, status: c.robots.status, mode: c.robots.parsed.mode, body: c.robots.body.slice(0, 5000) },
+    sitemap: { sources: c.sitemap.sources, urlCount: c.sitemap.urls.length, error: c.sitemap.error },
+    llmsTxt: c.llmsTxt,
+    pages: c.pages.map((p) => ({ url: p.finalUrl, status: p.status, role: p.role, depth: p.depth, title: p.title, htmlBytes: p.htmlBytes, ttfbMs: p.ttfbMs, words: p.wordCount })),
+    skippedByRobots: c.skippedByRobots,
+    failedFetches: c.failedFetches,
+    documents: c.documents.length,
+    assets: c.assets.map((a) => ({ url: a.url, kind: a.kind, status: a.status, bytes: a.bytes, thirdParty: a.thirdParty })),
+    botProbes: c.botProbes,
+    renders: c.renders,
+    renderError: c.renderError,
+  };
 }
 
 /** Load an audit; if it claims to be running but no job exists (server restarted), mark it interrupted. */

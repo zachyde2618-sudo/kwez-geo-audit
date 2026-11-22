@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fixture": "node fixtures/server.mjs 4010"
   },
   "dependencies": {
     "cheerio": "^1.2.0",

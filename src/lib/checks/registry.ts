@@ -1,12 +1,22 @@
 import { hasKey } from "@/config";
 import { CheckResult, MAX_SNIPPET_CHARS, type Evidence } from "@/lib/schemas/check";
 import { CHECKS, type CheckMeta } from "./catalogue";
+import { cat1 } from "./cat1";
+import { cat2 } from "./cat2";
+import { cat5 } from "./cat5";
+import { cat6 } from "./cat6";
+import { cat8 } from "./cat8";
 import { manualChecks } from "./manual";
 import type { CheckContext, CheckImpl, RawCheckResult } from "./types";
 
 /** Every implemented check, keyed by stable ID. Unimplemented IDs fall back to a stub. */
 const IMPLEMENTATIONS: Record<string, CheckImpl> = {
   ...manualChecks,
+  ...cat1,
+  ...cat2,
+  ...cat5,
+  ...cat6,
+  ...cat8,
 };
 
 export function getImplementation(id: string): CheckImpl | undefined {

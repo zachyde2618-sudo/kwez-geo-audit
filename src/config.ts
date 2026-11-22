@@ -47,6 +47,10 @@ export const config = {
     requestTimeoutMs: 15_000,
     /** Minimum gap between requests to the same domain (1 request/second). */
     minIntervalMsPerDomain: 1_000,
+    /** Pages fetched for asset measurement (images/scripts/CSS) and the asset cap. */
+    assetPages: 5,
+    maxAssets: 40,
+    maxRedirects: 5,
     /** Stop reading a response body after this many bytes (protects memory). */
     maxBodyBytes: 8 * 1024 * 1024,
     /** Probe the homepage with AI-bot-like user agents (check 1.6). Indicative only. */
@@ -62,6 +66,38 @@ export const config = {
       return env("ALLOW_LOCAL_TARGETS") === "true";
     },
   },
+
+  /** Agents checked in robots.txt (check 1.6/1.7). `kind` drives 1.7's Fail vs Partial. */
+  aiAgents: [
+    { token: "GPTBot", owner: "OpenAI", kind: "training" },
+    { token: "OAI-SearchBot", owner: "OpenAI", kind: "search" },
+    { token: "ChatGPT-User", owner: "OpenAI", kind: "search" },
+    { token: "ClaudeBot", owner: "Anthropic", kind: "training" },
+    { token: "Claude-SearchBot", owner: "Anthropic", kind: "search" },
+    { token: "Claude-User", owner: "Anthropic", kind: "search" },
+    { token: "PerplexityBot", owner: "Perplexity", kind: "search" },
+    { token: "Perplexity-User", owner: "Perplexity", kind: "search" },
+    { token: "Google-Extended", owner: "Google", kind: "training" },
+    { token: "Googlebot", owner: "Google", kind: "core" },
+    { token: "Bingbot", owner: "Microsoft", kind: "core" },
+    { token: "Applebot-Extended", owner: "Apple", kind: "training" },
+    { token: "CCBot", owner: "Common Crawl", kind: "training" },
+    { token: "meta-externalagent", owner: "Meta", kind: "training" },
+  ] as const,
+
+  /**
+   * User agents for homepage-only probes (1.1, 1.6). Our own token is appended so the
+   * requests stay identifiable. A block here is "indicative only": firewalls that verify
+   * bots by IP may block these probes while letting the real crawler through.
+   */
+  botProbeUserAgents: {
+    Googlebot: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    Bingbot: "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+    GPTBot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.1; +https://openai.com/gptbot",
+    "OAI-SearchBot": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot",
+    ClaudeBot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
+    PerplexityBot: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
+  } as Record<string, string>,
 
   thresholds: {
     googlebotFetchLimitBytes: 2 * 1024 * 1024,

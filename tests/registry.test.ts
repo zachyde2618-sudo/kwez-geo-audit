@@ -66,7 +66,8 @@ describe("finaliseResult enforces evidence rules", () => {
 
 describe("end-to-end stub audit with no keys", () => {
   it("reports all 72 checks, each Unable to Verify, with key-specific issues", async () => {
-    const input = parseAuditInput({ url: "example.co.uk", companyName: "Example Ltd" });
+    // .invalid never resolves (RFC 2606), so this stays offline on any machine.
+    const input = parseAuditInput({ url: "kwez-test.invalid", companyName: "Example Ltd" });
     const rec = newAuditRecord(input);
     const done = await executeAudit(rec, new AbortController().signal);
 
@@ -85,7 +86,7 @@ describe("end-to-end stub audit with no keys", () => {
   });
 
   it("stops and records cancellation when aborted", async () => {
-    const rec = newAuditRecord(parseAuditInput({ url: "example.co.uk" }));
+    const rec = newAuditRecord(parseAuditInput({ url: "kwez-test.invalid" }));
     const ctl = new AbortController();
     ctl.abort();
     const done = await executeAudit(rec, ctl.signal);

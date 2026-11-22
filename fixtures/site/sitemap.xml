@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{{ORIGIN}}/</loc></url>
+  <url><loc>{{ORIGIN}}/about.html</loc></url>
+  <url><loc>{{ORIGIN}}/services.html</loc></url>
+  <url><loc>{{ORIGIN}}/faq.html</loc></url>
+  <url><loc>{{ORIGIN}}/contact.html</loc></url>
+  <url><loc>{{ORIGIN}}/blog/</loc></url>
+  <url><loc>{{ORIGIN}}/blog/ev-charger-grants.html</loc><lastmod>2025-03-01</lastmod></url>
+  <url><loc>{{ORIGIN}}/blog/consumer-unit-upgrade.html</loc><lastmod>2024-06-10</lastmod></url>
+</urlset>
