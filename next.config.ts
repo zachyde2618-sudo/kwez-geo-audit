@@ -2,8 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Every page here is per-request (file-backed audits, live progress), so the
+  // Cache Components prerendering model is turned off.
+  cacheComponents: false,
   turbopack: {
     rules: {
       "*.css": {
