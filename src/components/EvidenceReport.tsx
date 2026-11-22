@@ -1,6 +1,7 @@
 import { CATEGORIES, CHECK_BY_ID } from "@/lib/checks/catalogue";
 import type { CheckResult, Evidence } from "@/lib/schemas/check";
 import type { ScoreSummary } from "@/lib/scoring";
+import { ScoreGauge } from "./ScoreGauge";
 import { StatusChip } from "./StatusChip";
 
 const METHOD_LABEL = { automated: "Automated", llm: "AI judgement", external: "External source", manual: "Needs inside knowledge" } as const;
@@ -23,7 +24,7 @@ export function EvidenceReport({ results, score }: { results: CheckResult[]; sco
                   {cs && ` · ${cs.counts.pass} pass, ${cs.counts.partial} partial, ${cs.counts.fail} fail, ${cs.counts.unable} unable to verify`}
                 </span>
               </span>
-              <span className="font-mono text-lg tabular-nums">{cs?.score == null ? "—" : Math.round(cs.score)}</span>
+              <ScoreGauge mini score={cs?.score == null ? null : Math.round(cs.score)} label={`${cat.name} score`} />
               <span aria-hidden className="text-ink-soft transition-transform group-open:rotate-180">⌄</span>
             </summary>
             <ul className="border-t border-line divide-y divide-line">
@@ -49,7 +50,7 @@ export function EvidenceReport({ results, score }: { results: CheckResult[]; sco
 function CheckRow({ result: r }: { result: CheckResult }) {
   const meta = CHECK_BY_ID.get(r.id)!;
   return (
-    <details className="group/check">
+    <details className="group/check scroll-mt-24" id={`check-${r.id}`}>
       <summary className="flex cursor-pointer items-start gap-3 px-4 sm:px-5 py-3.5 hover:bg-paper/60">
         <span className="w-9 shrink-0 pt-0.5 font-mono text-xs text-ink-soft">{r.id}</span>
         <span className="flex-1 min-w-0 text-sm leading-snug">

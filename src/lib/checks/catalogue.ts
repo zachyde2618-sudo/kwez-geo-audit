@@ -167,7 +167,7 @@ export const CHECKS: CheckMeta[] = [
 
   // ── Category 5 ────────────────────────────────────────────────────────────
   c("5.1", "Structured schema markup present", "Add schema markup to your pages",
-    "Schema markup is hidden code that labels your business, people and FAQs so machines understand them without guessing.", "A", 3, "Moderate", "kwez"),
+    "Without it, AI tools have to guess what your business is, where it is and what you offer.", "A", 3, "Moderate", "kwez"),
   c("5.2", "Familiar standard formats (AI familiarity bias)", "Use the standard schema types AI tools recognise",
     "Common types like Organization and FAQPage are the ones AI systems are trained to read.", "A", 2, "Moderate", "kwez"),
   c("5.3", "JSON-LD implemented correctly", "Fix errors in your schema markup and link it to your profiles",

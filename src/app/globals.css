@@ -49,6 +49,13 @@ body {
   border-color: var(--color-fail);
 }
 
+/* Score gauge: hidden until its animation starts, unless the visitor prefers reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .gauge-pending {
+    opacity: 0;
+  }
+}
+
 details > summary {
   list-style: none;
 }
