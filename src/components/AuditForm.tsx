@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, type ReactNode } from "react";
 import { PASTE_FIELD_LABELS, PASTE_TEMPLATE, parsePastedDetails } from "@/lib/paste";
+import { EyeLoader } from "./Brand";
 import { makeAuditInputSchema, splitList } from "@/lib/schemas/input";
 
 interface Person { fullName: string; jobTitle: string; linkedinUrl: string; otherUrls: string }
@@ -172,7 +173,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
       <Section title="Paste all details" subtitle="Optional. Paste everything at once, for example from a Google Doc, and we'll fill in the boxes below for you to check.">
         <Field
           label="Details with headings"
-          help="Put each detail under a heading such as Website:, Company name:, Industry:, Town:, Services:, Questions:, Competitors:, People:, Social profiles:. One person or competitor per line, e.g. “Jo Bloggs, Managing Director, LinkedIn link”."
+          help="Put each detail under a heading such as Website:, Company name:, Industry:, Town:, Services:, Questions:, Competitors:, People:, Social profiles:. People and competitors can be one per line (“Jo Bloggs, Managing Director, LinkedIn link”), over several lines, or as Person 1:, Competitor 1: and so on."
         >
           {(p) => (
             <textarea
@@ -226,7 +227,8 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
           {(p) => <input {...p} className="field-input text-lg" type="text" inputMode="url" autoComplete="url" placeholder="example.co.uk" value={url} onChange={(e) => setUrl(e.target.value)} />}
         </Field>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={prefill} disabled={!url.trim() || prefilling} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent disabled:opacity-50">
+          <button type="button" onClick={prefill} disabled={!url.trim() || prefilling} className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent disabled:opacity-50">
+            {prefilling && <EyeLoader size={18} label={null} halo={false} />}
             {prefilling ? "Reading the website…" : "Fill in details from the website"}
           </button>
           <span className="text-xs text-ink-soft">{prefillError || "Optional. We read the homepage and About page and show you what we found before using it."}</span>
@@ -348,7 +350,8 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
         <p role="status" className={`text-sm ${formError ? "text-fail" : "text-ink-soft"}`}>
           {formError || "72 checks across 9 categories. Most audits take 1–5 minutes."}
         </p>
-        <button type="submit" disabled={submitting} className="rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm hover:brightness-110 disabled:opacity-60">
+        <button type="submit" disabled={submitting} className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/25 hover:bg-accent-strong disabled:opacity-70">
+          {submitting && <EyeLoader size={20} label={null} halo={false} />}
           {submitting ? "Starting…" : "Run GEO audit"}
         </button>
       </div>
@@ -415,7 +418,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
   return (
     <section className="rounded-2xl border border-line bg-card p-5 sm:p-7 space-y-5">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <h2 className="text-lg font-bold tracking-tight">{title}</h2>
         {subtitle && <p className="text-sm text-ink-soft mt-0.5">{subtitle}</p>}
       </div>
       {children}

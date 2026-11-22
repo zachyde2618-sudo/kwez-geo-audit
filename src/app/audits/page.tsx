@@ -7,7 +7,7 @@ export default async function PastAudits() {
   const audits = await listAudits();
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Past audits</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Past audits</h1>
       {audits.length === 0 ? (
         <p className="mt-4 text-ink-soft">
           No audits yet. <Link href="/" className="text-accent underline">Run your first one</Link>.

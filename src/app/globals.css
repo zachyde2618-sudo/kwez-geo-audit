@@ -1,28 +1,99 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #f6f5f1;
+  /* Kwez brand: warm paper, near-black ink, the logo's terracotta orange */
+  --color-paper: #faf6f0;
   --color-card: #ffffff;
-  --color-line: #e4e2dc;
-  --color-ink: #17171c;
-  --color-ink-soft: #5f5e66;
-  --color-accent: #2440d6;
-  --color-accent-soft: #e8ecfd;
+  --color-line: #ebe2d7;
+  --color-ink: #1c1916;
+  --color-ink-soft: #6b625a;
+  --color-accent: #ad5527; /* text/buttons: 5.1:1 on white */
+  --color-accent-strong: #8f4520;
+  --color-accent-soft: #fbeee5;
+  --color-brand: #cc7244; /* the logo orange, for decoration only */
   --color-pass: #1d7a46;
   --color-pass-soft: #e3f3e9;
-  --color-partial: #a85d00;
-  --color-partial-soft: #fdf0dc;
+  --color-partial: #8a6100; /* amber, kept distinct from the brand orange */
+  --color-partial-soft: #fbf1d6;
   --color-fail: #c0322b;
   --color-fail-soft: #fbe5e3;
   --color-unable: #6b6a72;
   --color-unable-soft: #ecebe8;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-bitter), ui-serif, Georgia, serif;
 }
 
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+}
+
+/* Headings use the logo's slab serif */
+h1,
+h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ── Header logo: the eye on its own; the wordmark slides out on hover/focus ── */
+.brand-kwez {
+  display: block;
+  aspect-ratio: 522 / 158;
+  background: var(--color-ink);
+  -webkit-mask: url(/brand/kwez.png) left center / contain no-repeat;
+  mask: url(/brand/kwez.png) left center / contain no-repeat;
+}
+.brand-logo-reveal {
+  display: grid;
+  grid-template-columns: 0fr;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: grid-template-columns 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.brand-logo-reveal > * {
+  min-width: 0;
+  overflow: hidden;
+}
+.brand-logo:hover .brand-logo-reveal,
+.brand-logo:focus-visible .brand-logo-reveal {
+  grid-template-columns: 1fr;
+  opacity: 1;
+  transform: none;
+}
+.brand-logo-eye {
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.brand-logo:hover .brand-logo-eye,
+.brand-logo:focus-visible .brand-logo-eye {
+  transform: rotate(-12deg);
+}
+
+/* ── Eye loader: a blink every few seconds and a soft orange pulse ── */
+@keyframes eye-blink {
+  0%, 84%, 100% { transform: scaleY(1); }
+  90% { transform: scaleY(0.1); }
+}
+@keyframes eye-halo {
+  0% { box-shadow: 0 0 0 0 rgb(204 114 68 / 0.45); }
+  100% { box-shadow: 0 0 0 16px rgb(204 114 68 / 0); }
+}
+.eye-loader img {
+  animation: eye-blink 2.8s ease-in-out infinite;
+}
+.eye-loader--halo {
+  animation: eye-halo 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo-reveal,
+  .brand-logo-eye {
+    transition: none;
+  }
+  .eye-loader img,
+  .eye-loader--halo {
+    animation: none;
+  }
 }
 
 :focus-visible {

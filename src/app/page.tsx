@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-14">
       <div className="mb-10">
-        <p className="text-sm font-medium text-accent">Generative Engine Optimisation audit</p>
-        <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Generative Engine Optimisation audit</p>
+        <h1 className="mt-3 text-3xl sm:text-[2.6rem] font-extrabold tracking-tight leading-[1.12]">
           Will AI assistants recommend this business to someone who&rsquo;s never heard of it?
         </h1>
         <p className="mt-3 text-ink-soft max-w-2xl">

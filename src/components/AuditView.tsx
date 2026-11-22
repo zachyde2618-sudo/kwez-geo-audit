@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import { formatScoreLine } from "@/lib/scoring";
 import { buildTodo } from "@/lib/todo";
+import { EyeLoader } from "./Brand";
 import { CategoryBars } from "./CategoryBars";
 import { EvidenceReport } from "./EvidenceReport";
 import { ScoreGauge } from "./ScoreGauge";
@@ -52,17 +53,21 @@ function Progress({ audit, onCancel, cancelling, pollError }: { audit: AuditReco
   const latest = audit.progress.at(-1)?.message ?? "Starting…";
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-14">
-      <p className="text-sm font-medium text-accent">Auditing {audit.domain}</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight flex items-center gap-3">
-        <span className="size-3 rounded-full bg-accent animate-pulse" aria-hidden />
-        <span aria-live="polite">{latest}</span>
-      </h1>
+      <div className="flex items-center gap-5">
+        <EyeLoader size={64} label={null} />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Auditing {audit.domain}</p>
+          <h1 className="mt-1.5 text-2xl font-bold tracking-tight">
+            <span aria-live="polite">{latest}</span>
+          </h1>
+        </div>
+      </div>
       <p className="mt-2 text-sm text-ink-soft">
         {audit.results.length} of 72 checks done. You can leave this page and come back; the audit keeps running.
         {pollError && <span className="text-partial"> Lost contact with the server, retrying…</span>}
       </p>
       <div className="mt-4 h-1.5 rounded-full bg-line overflow-hidden">
-        <div className="h-full bg-accent transition-all duration-500" style={{ width: `${(audit.results.length / 72) * 100}%` }} />
+        <div className="h-full rounded-full bg-linear-to-r from-brand to-accent transition-all duration-500" style={{ width: `${(audit.results.length / 72) * 100}%` }} />
       </div>
       <ol ref={logRef} className="mt-6 max-h-80 overflow-y-auto rounded-2xl border border-line bg-card p-4 font-mono text-xs space-y-1.5">
         {audit.progress.map((p, i) => (
@@ -82,7 +87,7 @@ function Progress({ audit, onCancel, cancelling, pollError }: { audit: AuditReco
 function Ended({ audit }: { audit: AuditRecord }) {
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-14">
-      <h1 className="text-2xl font-semibold tracking-tight">{audit.status === "cancelled" ? "Audit cancelled" : "The audit didn't finish"}</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{audit.status === "cancelled" ? "Audit cancelled" : "The audit didn't finish"}</h1>
       <p className="mt-2 text-ink-soft">{audit.error ?? `The audit of ${audit.domain} was stopped before it finished.`}</p>
       <Link href="/" className="mt-6 inline-block rounded-xl bg-accent px-5 py-2.5 font-semibold text-white">Start a new audit</Link>
     </div>
@@ -134,7 +139,7 @@ function Results({ audit }: { audit: AuditRecord }) {
           <div className="space-y-4 text-center md:text-left">
             <div>
               <p className="text-sm font-medium text-accent">GEO Visibility Score</p>
-              <h1 id="results-title" className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight break-words">{name}</h1>
+              <h1 id="results-title" className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight break-words">{name}</h1>
               <p className="mt-1 text-sm text-ink-soft">
                 {audit.domain} · audited {formatDate(audit.createdAt)}
               </p>
@@ -192,7 +197,7 @@ function Results({ audit }: { audit: AuditRecord }) {
 function SectionHeading({ id, title, sub }: { id: string; title: string; sub?: string }) {
   return (
     <div className="mb-4">
-      <h2 id={id} className="text-2xl font-semibold tracking-tight">{title}</h2>
+      <h2 id={id} className="text-2xl font-bold tracking-tight">{title}</h2>
       {sub && <p className="mt-1 text-sm text-ink-soft">{sub}</p>}
     </div>
   );
