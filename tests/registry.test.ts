@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { API_KEY_NAMES } from "@/config";
+import { API_KEY_ENV_VARS } from "@/config";
 import { CATEGORIES, CHECKS, CHECK_BY_ID } from "@/lib/checks/catalogue";
 import { finaliseResult } from "@/lib/checks/registry";
 import { executeAudit, newAuditRecord } from "@/lib/pipeline";
@@ -11,14 +11,14 @@ import { loadAudit } from "@/lib/storage";
 
 const saved: Record<string, string | undefined> = {};
 beforeEach(() => {
-  for (const k of API_KEY_NAMES) {
+  for (const k of API_KEY_ENV_VARS) {
     saved[k] = process.env[k];
     delete process.env[k];
   }
   process.env.AUDITS_DIR = mkdtempSync(path.join(tmpdir(), "kwez-audits-"));
 });
 afterEach(() => {
-  for (const k of API_KEY_NAMES) if (saved[k] !== undefined) process.env[k] = saved[k];
+  for (const k of API_KEY_ENV_VARS) if (saved[k] !== undefined) process.env[k] = saved[k];
   delete process.env.AUDITS_DIR;
 });
 

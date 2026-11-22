@@ -29,7 +29,12 @@ async function acquireSlot(host: string, signal?: AbortSignal): Promise<void> {
   const next = new Promise<void>((r) => (release = r));
   hostQueue.set(host, prev.then(() => next));
   await prev;
-  signal?.throwIfAborted();
+  if (signal?.aborted) {
+    // Pass the slot on before bailing out. Throwing without releasing left the queue for this
+    // host stuck forever, so every later request to it (new audits, prefill) hung after a cancel.
+    release();
+    signal.throwIfAborted();
+  }
   setTimeout(release, minIntervalFor(host));
 }
 

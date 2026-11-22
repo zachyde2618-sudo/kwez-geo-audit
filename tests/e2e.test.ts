@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { API_KEY_NAMES } from "@/config";
+import { API_KEY_ENV_VARS } from "@/config";
 import { executeAudit, newAuditRecord } from "@/lib/pipeline";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import { parseAuditInput } from "@/lib/schemas/input";
@@ -35,7 +35,7 @@ const input = () =>
   );
 
 beforeAll(async () => {
-  for (const k of API_KEY_NAMES) delete process.env[k];
+  for (const k of API_KEY_ENV_VARS) delete process.env[k];
   process.env.AUDITS_DIR = mkdtempSync(path.join(tmpdir(), "kwez-e2e-"));
   process.env.ALLOW_LOCAL_TARGETS = "true";
   process.env.CRAWL_MIN_INTERVAL_MS = "0";

@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { API_KEY_NAMES, config } from "@/config";
+import { API_KEY_ENV_VARS, config } from "@/config";
 import { CHECK_BY_ID } from "@/lib/checks/catalogue";
 import { setLlmTransportForTests } from "@/lib/llm/client";
 import { CRITERIA, SITE_CRITERIA } from "@/lib/llm/rubrics";
@@ -28,7 +28,7 @@ const input = () =>
   );
 
 beforeAll(async () => {
-  for (const k of API_KEY_NAMES) {
+  for (const k of API_KEY_ENV_VARS) {
     saved[k] = process.env[k];
     delete process.env[k];
   }
@@ -43,7 +43,7 @@ beforeAll(async () => {
 afterAll(async () => {
   setLlmTransportForTests(null);
   await server?.close();
-  for (const k of API_KEY_NAMES) if (saved[k] !== undefined) process.env[k] = saved[k];
+  for (const k of API_KEY_ENV_VARS) if (saved[k] !== undefined) process.env[k] = saved[k];
   else delete process.env[k];
 });
 

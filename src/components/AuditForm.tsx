@@ -123,8 +123,13 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
     }
   }
 
+  /** Only the "Start audit" button starts an audit: Enter in a text box must not submit the form. */
+  function blockEnterSubmit(e: React.KeyboardEvent<HTMLFormElement>) {
+    if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
+  }
+
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-6">
+    <form onSubmit={onSubmit} onKeyDown={blockEnterSubmit} noValidate className="space-y-6">
       <Section title="Website" subtitle="The only thing we need to start.">
         <Field label="Website address" required help="We crawl up to 25 pages from here, politely and at one request per second." error={errors["url"]}>
           {(p) => <input {...p} className="field-input text-lg" type="text" inputMode="url" autoComplete="url" placeholder="example.co.uk" value={url} onChange={(e) => setUrl(e.target.value)} />}

@@ -64,4 +64,22 @@ describe("politeFetch", () => {
     expect(r.truncated).toBe(true);
     expect(r.body.length).toBe(1000);
   });
+
+  it("does not jam the per-host queue when a waiting request is cancelled", async () => {
+    process.env.ALLOW_LOCAL_TARGETS = "true";
+    process.env.CRAWL_MIN_INTERVAL_MS = "200";
+    const ctl = new AbortController();
+    const first = politeFetch(`${base}/a`);
+    const cancelled = politeFetch(`${base}/b`, { signal: ctl.signal }); // queued behind the first
+    ctl.abort(new Error("Cancelled by user"));
+    await first;
+    await expect(cancelled).rejects.toThrow("Cancelled by user");
+    // Before the fix this request waited forever for a slot the cancelled one never released.
+    const after = await Promise.race([
+      politeFetch(`${base}/c`),
+      new Promise<"hung">((r) => setTimeout(() => r("hung"), 3_000)),
+    ]);
+    expect(after).not.toBe("hung");
+    expect((after as { status: number }).status).toBe(200);
+  }, 10_000);
 });

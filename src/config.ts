@@ -23,9 +23,23 @@ export const API_KEY_NAMES = [
 ] as const;
 export type ApiKeyName = (typeof API_KEY_NAMES)[number];
 
-/** Read keys lazily so tests (and a restarted server) see the current environment. */
+/**
+ * Fallback env var names per key. ANTHROPIC_API_KEY falls back to KWEZ_ANTHROPIC_API_KEY so the
+ * app can run where ANTHROPIC_API_KEY is reserved or unset (e.g. hosted dev sessions).
+ */
+const KEY_FALLBACKS: Partial<Record<ApiKeyName, string[]>> = {
+  ANTHROPIC_API_KEY: ["KWEZ_ANTHROPIC_API_KEY"],
+};
+/** Every env var a key can be read from (primary names plus fallbacks). Tests clear these. */
+export const API_KEY_ENV_VARS: string[] = API_KEY_NAMES.flatMap((k) => [k, ...(KEY_FALLBACKS[k] ?? [])]);
+
+/**
+ * Read keys lazily so tests (and a restarted server) see the current environment.
+ * Every key check (hasKey, keysConfigured, check `requires`) and read (LLM client) goes
+ * through here, so fallbacks apply everywhere.
+ */
 export function getKey(name: ApiKeyName): string | undefined {
-  return env(name);
+  return env(name) ?? KEY_FALLBACKS[name]?.map(env).find((v) => v !== undefined);
 }
 export function hasKey(name: ApiKeyName): boolean {
   return getKey(name) !== undefined;
