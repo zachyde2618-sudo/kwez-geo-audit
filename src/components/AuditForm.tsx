@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useId, useState, type ReactNode } from "react";
+import { PASTE_FIELD_LABELS, PASTE_TEMPLATE, parsePastedDetails } from "@/lib/paste";
 import { makeAuditInputSchema, splitList } from "@/lib/schemas/input";
 
 interface Person { fullName: string; jobTitle: string; linkedinUrl: string; otherUrls: string }
@@ -38,6 +39,44 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
   const [prefilling, setPrefilling] = useState(false);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [prefillError, setPrefillError] = useState("");
+  const [pasteText, setPasteText] = useState("");
+  const [pasteReport, setPasteReport] = useState<{ filled: string[]; unrecognised: string[] } | null>(null);
+  const [templateCopied, setTemplateCopied] = useState(false);
+
+  /** Fill the form from pasted text. Pasted values replace what's in those boxes; others are left alone. */
+  function applyPaste() {
+    const { details: d, filled, unrecognised } = parsePastedDetails(pasteText);
+    if (d.url !== undefined) setUrl(d.url);
+    if (d.companyName !== undefined) setCompanyName(d.companyName);
+    if (d.industry !== undefined) setIndustry(d.industry);
+    if (d.town !== undefined) setTown(d.town);
+    if (d.country !== undefined) setCountry(d.country);
+    if (d.services !== undefined) setServices(d.services);
+    if (d.questions !== undefined) setQuestions(d.questions);
+    if (d.competitors !== undefined) setCompetitors(d.competitors);
+    if (d.people !== undefined) setPeople(d.people);
+    if (d.chNumber !== undefined) setChNumber(d.chNumber);
+    if (d.gbpUrl !== undefined) setGbpUrl(d.gbpUrl);
+    if (d.reviewUrls !== undefined) setReviewUrls(d.reviewUrls);
+    if (d.socialUrls !== undefined) setSocialUrls(d.socialUrls);
+    if (d.pressUrls !== undefined) setPressUrls(d.pressUrls);
+    if (d.maxPages !== undefined) setMaxPages(d.maxPages);
+    if (d.runVisibility !== undefined) setRunVisibility(d.runVisibility);
+    if (d.promptCount !== undefined) setPromptCount(d.promptCount);
+    setErrors({});
+    setFormError("");
+    setPasteReport({ filled: filled.map((f) => PASTE_FIELD_LABELS[f]), unrecognised });
+  }
+
+  async function copyTemplate() {
+    try {
+      await navigator.clipboard.writeText(PASTE_TEMPLATE);
+      setTemplateCopied(true);
+      setTimeout(() => setTemplateCopied(false), 2500);
+    } catch {
+      if (!pasteText.trim()) setPasteText(PASTE_TEMPLATE);
+    }
+  }
 
   async function prefill() {
     setPrefilling(true);
@@ -130,6 +169,58 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
 
   return (
     <form onSubmit={onSubmit} onKeyDown={blockEnterSubmit} noValidate className="space-y-6">
+      <Section title="Paste all details" subtitle="Optional. Paste everything at once, for example from a Google Doc, and we'll fill in the boxes below for you to check.">
+        <Field
+          label="Details with headings"
+          help="Put each detail under a heading such as Website:, Company name:, Industry:, Town:, Services:, Questions:, Competitors:, People:, Social profiles:. One person or competitor per line, e.g. “Jo Bloggs, Managing Director, LinkedIn link”."
+        >
+          {(p) => (
+            <textarea
+              {...p}
+              rows={8}
+              className="field-input font-mono text-sm"
+              placeholder={"Website: example.co.uk\nCompany name: Bright Spark Electrical\nIndustry: Domestic electricians\nTown: Leeds\nServices: rewiring, EV charger installation\nPeople:\n- Jo Bloggs, Managing Director, https://www.linkedin.com/in/jo-bloggs"}
+              value={pasteText}
+              onChange={(e) => {
+                setPasteText(e.target.value);
+                setPasteReport(null);
+              }}
+            />
+          )}
+        </Field>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={applyPaste} disabled={!pasteText.trim()} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">
+            Fill in the form
+          </button>
+          <button type="button" onClick={copyTemplate} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent">
+            {templateCopied ? "Template copied" : "Copy blank template"}
+          </button>
+          <span className="text-xs text-ink-soft">Nothing is sent anywhere until you press Run GEO audit.</span>
+        </div>
+        {pasteReport && (
+          <div role="status" className="rounded-xl border border-accent/30 bg-accent-soft/50 p-4 space-y-2 text-sm">
+            {pasteReport.filled.length ? (
+              <p>
+                <span className="font-medium">Filled in:</span> {pasteReport.filled.join(", ")}. Check the boxes below, then press Run GEO audit.
+              </p>
+            ) : (
+              <p className="font-medium">We didn&rsquo;t find any headings we recognise. Try the blank template for the headings to use.</p>
+            )}
+            {pasteReport.unrecognised.length > 0 && (
+              <div>
+                <p className="text-ink-soft">Not used. Add these by hand if they matter:</p>
+                <ul className="list-disc pl-5 text-ink-soft">
+                  {pasteReport.unrecognised.slice(0, 8).map((l, i) => (
+                    <li key={i} className="break-all">{l}</li>
+                  ))}
+                  {pasteReport.unrecognised.length > 8 && <li>…and {pasteReport.unrecognised.length - 8} more</li>}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </Section>
+
       <Section title="Website" subtitle="The only thing we need to start.">
         <Field label="Website address" required help="We crawl up to 25 pages from here, politely and at one request per second." error={errors["url"]}>
           {(p) => <input {...p} className="field-input text-lg" type="text" inputMode="url" autoComplete="url" placeholder="example.co.uk" value={url} onChange={(e) => setUrl(e.target.value)} />}
