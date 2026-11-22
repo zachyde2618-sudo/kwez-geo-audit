@@ -29,3 +29,20 @@ describe("getKey applies the clean-up", () => {
     expect(getKey("ANTHROPIC_API_KEY")).toBe("sk-ant-api03-xyz");
   });
 });
+
+describe("AI token budget", () => {
+  const saved = process.env.AI_TOKEN_BUDGET;
+  afterEach(() => {
+    if (saved === undefined) delete process.env.AI_TOKEN_BUDGET;
+    else process.env.AI_TOKEN_BUDGET = saved;
+  });
+  it("defaults to 1,000,000 and can be overridden", async () => {
+    const { config } = await import("@/config");
+    delete process.env.AI_TOKEN_BUDGET;
+    expect(config.llm.maxTokensPerAudit).toBe(1_000_000);
+    process.env.AI_TOKEN_BUDGET = "2,000,000";
+    expect(config.llm.maxTokensPerAudit).toBe(2_000_000);
+    process.env.AI_TOKEN_BUDGET = "nonsense";
+    expect(config.llm.maxTokensPerAudit).toBe(1_000_000);
+  });
+});

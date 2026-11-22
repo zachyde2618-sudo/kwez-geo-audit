@@ -269,6 +269,9 @@ export async function runSiteReview(opts: {
     }
     chunks.forEach((c, i) => tasks.push({ group, blocks: c, index: i + 1, total: chunks.length }));
   }
+  // Every group's part 1 (its most important pages: home, about, FAQ…) before any group's part 2,
+  // so if the token budget runs short no group is left with nothing judged. Sort is stable.
+  tasks.sort((a, b) => a.index - b.index);
 
   progress(`AI review: ${tasks.length} request(s) to ${client.model} covering ${reviewable.length} page(s)`);
   await pool(tasks, opts.concurrency, async (t) => {

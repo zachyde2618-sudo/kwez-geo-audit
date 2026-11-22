@@ -156,8 +156,14 @@ export const config = {
     /** Reasoning effort for judgements. Thinking tokens count towards maxOutputTokensPerCall. */
     effort: "medium" as "low" | "medium" | "high",
     maxOutputTokensPerCall: 8_000,
-    /** Hard cap across a whole audit (input + output, all calls and retries). */
-    maxTokensPerAudit: 400_000,
+    /**
+     * Hard cap across a whole audit (input + output, all calls and retries). 1M tokens is roughly
+     * $2–3 at Sonnet prices; large, text-heavy sites need most of it. Override with AI_TOKEN_BUDGET.
+     */
+    get maxTokensPerAudit() {
+      const n = Number(env("AI_TOKEN_BUDGET")?.replace(/[_,]/g, ""));
+      return Number.isFinite(n) && n >= 10_000 ? Math.floor(n) : 1_000_000;
+    },
     maxRetriesOnInvalidOutput: 2,
     /** Page text is sent in chunks of at most this many characters (~4 chars per token). */
     chunkChars: 48_000,

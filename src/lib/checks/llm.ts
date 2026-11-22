@@ -33,7 +33,7 @@ export function judgementResult(ctx: CheckContext, id: string): RawCheckResult {
   const j = isExternal ? ext!.judgements![id] : ctx.data.llm?.judgements[id];
   if (!review || !j) return noJudgement(ctx);
   const criterion = CRITERIA[id];
-  if (j.error) return unable(`Not checked: the AI review could not complete (${j.error}).`, "Re-run the audit; if it keeps failing, check the ANTHROPIC_API_KEY and the token budget in src/config.ts.", { method: "llm" });
+  if (j.error) return unable(`Not checked: the AI review could not complete (${j.error}).`, "Re-run the audit; if it keeps failing, check the ANTHROPIC_API_KEY, or raise the per-audit token budget with the AI_TOKEN_BUDGET setting (default 1,000,000).", { method: "llm" });
   const v = j.verdict!;
   const notes = j.incomplete ? [`Part of the AI review failed (${j.incomplete}), but the result from the remaining pages is conclusive.`] : [];
   const evidence = [scopeEvidence(review, j, isExternal), ...quoteEvidence(j, isExternal)];
