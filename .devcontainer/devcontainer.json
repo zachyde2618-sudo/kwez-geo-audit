@@ -1,0 +1,22 @@
+{
+  // Codespaces setup for the Kwez GEO Audit app.
+  // Opening the codespace installs packages (when needed), starts the app in its own
+  // terminal and forwards port 3000. API keys come from your Codespaces secrets
+  // (ANTHROPIC_API_KEY, SEARCH_API_KEY, SEARCH_API_PROVIDER), never from this file.
+  "name": "Kwez GEO Audit",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "npm install",
+  "updateContentCommand": "npm install",
+  // Runs in a terminal each time you open the codespace, so the app is just there.
+  "postAttachCommand": {
+    "app": "ALLOW_LOCAL_TARGETS=true npm run dev"
+  },
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Kwez GEO Audit", "onAutoForward": "openBrowser" },
+    "4010": { "label": "Test site (npm run fixture)", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] }
+  }
+}
