@@ -126,7 +126,7 @@ const c11: CheckImpl = (ctx) => {
 
 const KEY_FACT_ROLES: { role: PageData["role"][]; label: string }[] = [
   { role: ["about", "team"], label: "About / team" },
-  { role: ["services"], label: "Services or products" },
+  { role: ["services", "product", "collection"], label: "Services or products" },
   { role: ["contact"], label: "Contact" },
 ];
 

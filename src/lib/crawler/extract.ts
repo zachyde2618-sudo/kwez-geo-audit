@@ -42,18 +42,25 @@ export function classifyRole(url: string, title = "", h1 = ""): PageRole {
   const p = path;
   const t = `${title} ${h1}`.toLowerCase();
   if (/faq|frequently-asked|\/questions|help-centre|help-center/.test(p) || /frequently asked|\bfaqs?\b/.test(t)) return "faq";
-  if (/\/(blog|news|insights|articles|journal|updates)(\/|$)/.test(p)) {
-    const i = segs.findIndex((s) => /^(blog|news|insights|articles|journal|updates)$/.test(s));
+  if (/\/(blogs?|news|insights|articles|journal|updates)(\/|$)/.test(p)) {
+    const i = segs.findIndex((s) => /^(blogs?|news|insights|articles|journal|updates)$/.test(s));
+    // Shopify: /blogs/<blog-name>/<article> (the blog's own name is part of the index address)
+    if (segs[i] === "blogs") return segs.length > i + 2 ? "post" : "blog";
     const rest = segs.slice(i + 1).filter((s) => !/^(page|category|tag|\d+)$/.test(s));
     return rest.length ? "post" : "blog";
   }
   if (/\/(team|people|our-team|founders?|leadership|staff|meet-the-team)(\/|$)/.test(p)) return "team";
-  if (/\/(about|about-us|our-story|who-we-are|company)(\/|$)/.test(p)) return "about";
+  if (/\/(about|about-us|our-story|story|who-we-are|company|our-values|values|our-mission|mission|our-ethos|ethos|our-philosophy|founder-story)(\/|$)/.test(p)) return "about";
   if (/\/(case-stud|portfolio|our-work|work|projects|clients|success-stories)/.test(p)) return "case-study";
   if (/\/(reviews?|testimonials?)(\/|$)/.test(p)) return "reviews";
   if (/\/(research|reports?|surveys?|stud(y|ies)|whitepapers?|data|benchmarks?)(\/|$)/.test(p)) return "research";
-  if (/\/(services?|products?|what-we-do|solutions|pricing|prices|shop)(\/|$)/.test(p)) return "services";
   if (/\/(contact|contact-us|get-in-touch|find-us|locations?)(\/|$)/.test(p)) return "contact";
+  if (/\/(polic(y|ies)|privacy|cookies?|terms|terms-(and|of)-[a-z-]+|refunds?|returns?|shipping|delivery|legal|gdpr|accessibility|modern-slavery)[a-z-]*(\/|$)/.test(p)) return "policy";
+  // A product: /products/<slug>, /product/<slug>, /shop/<slug>, /store/<slug> (also /collections/x/products/<slug>).
+  const pi = segs.findIndex((s) => /^(products?|shop|store)$/.test(s));
+  if (pi >= 0 && segs.length > pi + 1 && !/^(page|category|tag|\d+)$/.test(segs[pi + 1])) return "product";
+  if (/\/(collections?|categor(y|ies)|product-category|ranges?|shop|store|products?)(\/|$)/.test(p)) return "collection";
+  if (/\/(services?|what-we-do|solutions|treatments?|pricing|prices)(\/|$)/.test(p)) return "services";
   return "other";
 }
 

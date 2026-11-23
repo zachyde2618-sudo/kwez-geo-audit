@@ -4,7 +4,7 @@ import { CATEGORIES, CHECKS } from "@/lib/checks/catalogue";
 import { snapshotPages } from "@/lib/checks/cat8";
 import { runCheck } from "@/lib/checks/registry";
 import type { CheckContext, PageSnapshot, PreviousAudit } from "@/lib/checks/types";
-import { crawlSite } from "@/lib/crawler/crawl";
+import { crawlSite, ROLE_LABEL } from "@/lib/crawler/crawl";
 import type { CrawlData } from "@/lib/crawler/types";
 import { LlmClient } from "@/lib/llm/client";
 import { runSiteReview, type SiteReview } from "@/lib/llm/review";
@@ -98,7 +98,9 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
       ctx.data.crawl = await crawlSite(record.input, signal, progress);
       record.extras.crawlSummary = crawlSummary(ctx.data.crawl);
       record.extras.pageSnapshots = snapshotPages(ctx.data.crawl);
-      progress(`Crawled ${ctx.data.crawl.pages.length} page(s)`);
+      const mix = new Map<string, number>();
+      for (const pg of ctx.data.crawl.pages) mix.set(ROLE_LABEL[pg.role], (mix.get(ROLE_LABEL[pg.role]) ?? 0) + 1);
+      progress(`Crawled ${ctx.data.crawl.pages.length} page(s): ${[...mix].map(([k, v]) => `${v} ${k}`).join(", ")}`);
     } catch (err) {
       if (signal.aborted) throw err;
       ctx.data.crawlError = err instanceof Error ? err.message : String(err);

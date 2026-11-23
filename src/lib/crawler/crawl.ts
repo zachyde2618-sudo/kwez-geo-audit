@@ -13,36 +13,97 @@ const NON_HTML = /\.(pdf|docx?|xlsx?|pptx?|zip|rar|jpe?g|png|gif|webp|avif|svg|i
 const DOC_EXT = /\.(pdf|docx?|xlsx?|pptx?)(\?|$)/i;
 const MAX_SITEMAP_FILES = 4;
 const MAX_SITEMAP_URLS = 1000;
-const MAX_POSTS = 5;
+/** Pages never worth auditing: carts, accounts, checkouts, search results, logins. */
+const SKIP_PATH = /\/(cart|basket|checkout|account|my-account|login|log-in|sign-in|signin|register|sign-up|wishlist|compare|search)(\/|$)/i;
+/** Query strings that only re-sort or re-filter the same page, or pick a product variant. */
+const SKIP_QUERY = /[?&](variant|sort_by|sort|orderby|filter\.[^=]*|q|add-to-cart|currency|ref|utm_[a-z]+)=/i;
 
-const ROLE_PRIORITY: Record<PageRole, number> = {
-  home: 0,
-  faq: 1,
-  about: 1,
-  team: 1,
-  services: 1,
-  contact: 2,
-  "case-study": 2,
-  reviews: 2,
-  research: 2,
-  blog: 3,
-  other: 4,
-  post: 5,
+/**
+ * How the crawl budget is shared between kinds of page (see planNext):
+ *  - weight: share of the budget once every must-have page is in (higher = more pages)
+ *  - cap: most pages of that kind, as a share of the budget (min 1); beyond it, a kind only
+ *    gets pages once every other kind has had its share
+ *  - priority: tie-breaker, and the order for must-haves and for filling spare slots
+ */
+export const ROLE_PLAN: Record<PageRole, { weight: number; cap: number; priority: number; mustHave?: boolean }> = {
+  home: { weight: 0, cap: 0, priority: 0 },
+  about: { weight: 1.5, cap: 0.08, priority: 1, mustHave: true },
+  faq: { weight: 2.5, cap: 0.2, priority: 1, mustHave: true },
+  services: { weight: 3.5, cap: 0.35, priority: 1, mustHave: true },
+  product: { weight: 3.5, cap: 0.35, priority: 1, mustHave: true },
+  team: { weight: 1, cap: 0.08, priority: 2, mustHave: true },
+  contact: { weight: 0.5, cap: 0.04, priority: 2, mustHave: true },
+  reviews: { weight: 1, cap: 0.08, priority: 2, mustHave: true },
+  "case-study": { weight: 1.5, cap: 0.12, priority: 2, mustHave: true },
+  research: { weight: 1, cap: 0.1, priority: 2 },
+  collection: { weight: 1, cap: 0.12, priority: 3 },
+  post: { weight: 2, cap: 0.2, priority: 3 },
+  blog: { weight: 0.3, cap: 0.04, priority: 4 },
+  other: { weight: 1, cap: 0.15, priority: 4 },
+  policy: { weight: 0.2, cap: 0.04, priority: 5 },
 };
 
-export const KEY_ROLES: PageRole[] = ["home", "about", "team", "services", "faq", "contact"];
+interface Queued {
+  depth: number;
+  role: PageRole;
+}
+
+/**
+ * Choose the next page to fetch: first one of each must-have kind (About, FAQ, services,
+ * products, team, contact, reviews, case studies), then share the rest of the budget by
+ * weight, never letting one kind pass its cap while others are waiting. Within a kind,
+ * pages closer to the homepage (and shorter URLs) come first.
+ */
+export function planNext(queue: Map<string, Queued>, picked: Partial<Record<PageRole, number>>, maxPages: number): string | undefined {
+  const byRole = new Map<PageRole, [string, Queued][]>();
+  for (const e of queue) {
+    const list = byRole.get(e[1].role) ?? [];
+    list.push(e);
+    byRole.set(e[1].role, list);
+  }
+  const best = (role: PageRole) =>
+    byRole.get(role)!.sort(([ua, a], [ub, b]) => a.depth - b.depth || ua.length - ub.length || ua.localeCompare(ub))[0][0];
+  const roles = [...byRole.keys()].sort((a, b) => ROLE_PLAN[a].priority - ROLE_PLAN[b].priority || a.localeCompare(b));
+  const n = (r: PageRole) => picked[r] ?? 0;
+
+  const must = roles.find((r) => ROLE_PLAN[r].mustHave && n(r) === 0);
+  if (must) return best(must);
+
+  const capOf = (r: PageRole) => Math.max(1, Math.round(ROLE_PLAN[r].cap * maxPages));
+  const open = roles.filter((r) => ROLE_PLAN[r].weight > 0 && n(r) < capOf(r));
+  if (open.length) {
+    open.sort((a, b) => (n(a) + 1) / ROLE_PLAN[a].weight - (n(b) + 1) / ROLE_PLAN[b].weight || ROLE_PLAN[a].priority - ROLE_PLAN[b].priority);
+    return best(open[0]);
+  }
+  // Every kind has had its share: keep sharing spare slots by weight, without caps.
+  const spare = roles.filter((r) => ROLE_PLAN[r].weight > 0);
+  spare.sort((a, b) => (n(a) + 1) / ROLE_PLAN[a].weight - (n(b) + 1) / ROLE_PLAN[b].weight || ROLE_PLAN[a].priority - ROLE_PLAN[b].priority);
+  return spare.length ? best(spare[0]) : roles.length ? best(roles[0]) : undefined;
+}
+
+export const ROLE_LABEL: Record<PageRole, string> = {
+  home: "home", about: "about", team: "team", services: "service", product: "product", collection: "collection",
+  faq: "FAQ", contact: "contact", blog: "blog index", post: "article", "case-study": "case study", reviews: "reviews",
+  research: "research", policy: "policy", other: "other",
+};
+
+export const KEY_ROLES: PageRole[] = ["home", "about", "team", "services", "product", "faq", "contact"];
 
 /** URL to fetch: as linked, without the fragment. */
+/** Shopify serves every product at /products/<slug> and again under each collection. */
+const SHOPIFY_COLLECTION_PRODUCT = /^\/collections\/[^/]+(\/products\/[^/]+\/?)$/i;
+
 function fetchableUrl(u: string): string {
   const url = new URL(u);
   url.hash = "";
+  const m = SHOPIFY_COLLECTION_PRODUCT.exec(url.pathname);
+  if (m) url.pathname = m[1];
   return url.toString();
 }
 
 /** Key for de-duplication only: ignores a trailing slash and the host's www. prefix. */
 function canonicalUrl(u: string): string {
-  const url = new URL(u);
-  url.hash = "";
+  const url = new URL(fetchableUrl(u));
   const path = url.pathname !== "/" ? url.pathname.replace(/\/+$/, "") : "/";
   return `${url.protocol}//${hostKey(url.hostname)}${url.port ? `:${url.port}` : ""}${path}${url.search}`;
 }
@@ -97,11 +158,19 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
   const failedFetches: CrawlData["failedFetches"] = [];
   const documents: CrawlData["documents"] = [];
   const seen = new Set<string>();
-  const queue = new Map<string, { depth: number; role: PageRole }>();
-  let postCount = 0;
+  const queue = new Map<string, Queued>();
+  const picked: Partial<Record<PageRole, number>> = {};
 
   const isInternal = (u: string) => hosts.has(hostKey(new URL(u).hostname));
   const queueKeys = new Map<string, string>(); // canonical key → URL in queue
+  // A page named after the brand (Shopify's /pages/saira) is usually the About page.
+  const brand = hostKey(start.hostname).split(".")[0].replace(/[^a-z0-9]/g, "");
+  const roleFor = (u: string): PageRole => {
+    const role = classifyRole(u);
+    if (role !== "other") return role;
+    const slug = new URL(u).pathname.split("/").filter(Boolean).at(-1)?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+    return slug.length >= 4 && (brand.startsWith(slug) || slug.startsWith(brand)) ? "about" : role;
+  };
   const enqueue = (u: string, depth: number) => {
     let c: string;
     let f: string;
@@ -111,13 +180,14 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
     } catch {
       return;
     }
-    if (seen.has(c) || !isInternal(f) || NON_HTML.test(new URL(f).pathname)) return;
+    const fu = new URL(f);
+    if (seen.has(c) || !isInternal(f) || NON_HTML.test(fu.pathname) || SKIP_PATH.test(fu.pathname) || SKIP_QUERY.test(fu.search)) return;
     const existing = queueKeys.get(c);
     const prev = existing ? queue.get(existing) : undefined;
     if (prev && depth >= prev.depth) return;
     if (existing) queue.delete(existing);
     queueKeys.set(c, f);
-    queue.set(f, { depth, role: classifyRole(f) });
+    queue.set(f, { depth, role: roleFor(f) });
   };
 
   const fetchPage = async (url: string, depth: number): Promise<PageData | null> => {
@@ -144,6 +214,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
       depth,
       siteHosts: [...hosts],
     });
+    if (page.role === "other") page.role = roleFor(page.finalUrl);
     if (r.status >= 400) failedFetches.push({ url, status: r.status });
     return page;
   };
@@ -165,17 +236,12 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
 
   while (pages.length < maxPages && queue.size && home && home.status < 400) {
     signal.throwIfAborted();
-    const [next] = [...queue.entries()].sort(
-      ([ua, a], [ub, b]) => ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role] || a.depth - b.depth || ua.length - ub.length,
-    );
-    const [url, meta] = next;
+    const url = planNext(queue, picked, maxPages)!;
+    const meta = queue.get(url)!;
     queue.delete(url);
     queueKeys.delete(canonicalUrl(url));
-    if (meta.role === "post") {
-      if (postCount >= MAX_POSTS) continue;
-      postCount++;
-    }
-    progress(`Fetching page ${pages.length + 1} of up to ${maxPages}: ${new URL(url).pathname}`);
+    picked[meta.role] = (picked[meta.role] ?? 0) + 1;
+    progress(`Fetching page ${pages.length + 1} of up to ${maxPages} (${ROLE_LABEL[meta.role]}): ${new URL(url).pathname}`);
     const page = await fetchPage(url, meta.depth);
     if (!page) continue;
     pages.push(page);
@@ -214,7 +280,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
   }
 
   // ── assets (images, scripts, stylesheets) on the most important pages ──
-  const assetPages = [...pages].sort((a, b) => ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role]).slice(0, config.crawler.assetPages);
+  const assetPages = [...pages].sort((a, b) => ROLE_PLAN[a.role].priority - ROLE_PLAN[b.role].priority).slice(0, config.crawler.assetPages);
   const assetMap = new Map<string, AssetInfo>();
   const addAsset = (url: string, kind: AssetInfo["kind"], page: string) => {
     if (url.startsWith("data:")) return;

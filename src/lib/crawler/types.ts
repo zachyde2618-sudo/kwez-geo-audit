@@ -99,6 +99,10 @@ export type PageRole =
   | "about"
   | "team"
   | "services"
+  /** A single product page (e.g. /products/vitamin-c-serum). */
+  | "product"
+  /** A product listing or category page (e.g. /collections/face). */
+  | "collection"
   | "faq"
   | "contact"
   | "blog"
@@ -106,6 +110,8 @@ export type PageRole =
   | "case-study"
   | "reviews"
   | "research"
+  /** Privacy, terms, shipping, returns, cookies and similar. */
+  | "policy"
   | "other";
 
 export interface PageData {

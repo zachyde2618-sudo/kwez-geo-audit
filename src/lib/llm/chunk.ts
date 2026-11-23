@@ -17,7 +17,7 @@ export interface PageBlock {
   source: QuoteSource;
 }
 
-const ROLE_ORDER = [...KEY_ROLES, "case-study", "reviews", "research", "blog", "post", "other"];
+const ROLE_ORDER = [...KEY_ROLES, "case-study", "reviews", "research", "collection", "blog", "post", "other", "policy"];
 
 /** Order pages so key pages are reviewed first; drop error pages and near-empty pages. */
 export function reviewablePages(pages: PageData[]): PageData[] {
