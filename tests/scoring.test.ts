@@ -98,3 +98,26 @@ describe("bandFor", () => {
     [100, "Excellent"],
   ])("%i → %s", (n, band) => expect(bandFor(n)).toBe(band));
 });
+
+describe("checks not in this build", () => {
+  it("are left out of coverage and the score, and counted separately", async () => {
+    const { CHECKS } = await import("@/lib/checks/catalogue");
+    const all = CHECKS.map((c) => ({ id: c.id, status: c.id === "2.1" ? ("unable" as const) : ("pass" as const), evidence: [], issue: "", requiredChange: "", effort: c.effort, impact: c.impact, method: c.method, pages: [], notes: [] }));
+    const counted = computeScore(all);
+    const excluded = computeScore(all, undefined, { notInBuild: new Set(["2.1"]) });
+    expect(counted.coveragePct).toBeLessThan(100);
+    expect(excluded.coveragePct).toBe(100);
+    expect(excluded.notInBuild).toBe(1);
+    expect(excluded.overall).toBe(100);
+  });
+});
+
+describe("sites with no FAQ", () => {
+  it("fail the FAQ content checks instead of leaving them unchecked", async () => {
+    const { CRITERIA } = await import("@/lib/llm/rubrics");
+    for (const id of ["2.3", "2.4", "4.2", "4.3", "4.4"]) {
+      expect(CRITERIA[id].notApplicable.status, id).toBe("fail");
+      expect(CRITERIA[id].notApplicable.issue, id).toMatch(/There's no FAQ/);
+    }
+  });
+});

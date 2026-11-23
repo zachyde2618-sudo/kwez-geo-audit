@@ -240,7 +240,7 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       rubric:
         "Are the FAQ questions written in the words customers would use when asking an AI assistant (plain, conversational, including the service and place), rather than internal jargon? Use the business context and example questions. Pass: questions use natural customer wording. Partial: a mix. Fail: mostly jargon or generic. Quote FAQ questions.",
       mode: "best",
-      notApplicable: { status: "unable", issue: "Not checked: no FAQ questions were found (see check 2.2)." },
+      notApplicable: { status: "fail", issue: "There's no FAQ, so there are no questions written the way customers ask them for AI assistants to match (see check 2.2)." },
       fix: "Rewrite FAQ questions in your customers' own words, including the service and the place, e.g. \"How much does it cost to rewire a house in Leeds?\"",
     }),
     C({
@@ -249,7 +249,7 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       rubric:
         "Does the FAQ include the kind of full, conversational questions people actually ask AI assistants when choosing a provider (\"Who is the best … in [town]?\", \"How much does … cost?\", \"Is it worth …?\", \"How do I choose …?\"), rather than only housekeeping questions (\"How do I contact you?\", \"Where are you based?\")? Pass: several such questions. Partial: one or two. Fail: none. Quote the relevant questions; name missing question types in the finding.",
       mode: "best",
-      notApplicable: { status: "unable", issue: "Not checked: no FAQ questions were found (see check 2.2)." },
+      notApplicable: { status: "fail", issue: "There's no FAQ, so none of the questions customers ask an AI (cost, timing, who's best, how to choose) are answered on the site (see check 2.2)." },
       fix: "Add the questions people ask AI when choosing a provider: cost, how long it takes, how to choose, whether it's worth it, and \"best X in [town]\".",
     }),
     C({
@@ -258,7 +258,7 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       rubric:
         "Do the FAQ questions address what buyers of this kind of business value: price, quality and qualifications, speed and availability, location/coverage, trust and guarantees? Pass: at least four of these themes are covered. Partial: two or three. Fail: one or none. Quote the questions that cover themes; name missing themes in the finding.",
       mode: "best",
-      notApplicable: { status: "unable", issue: "Not checked: no FAQ questions were found (see check 2.2)." },
+      notApplicable: { status: "fail", issue: "There's no FAQ, so customers' concerns about price, quality, timing and trust aren't answered anywhere AI can quote (see check 2.2)." },
       fix: "Add FAQs on price, qualifications and quality, speed and availability, areas covered, and guarantees or insurance.",
     }),
     C({
@@ -267,7 +267,7 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       rubric:
         "Compare the FAQ with the business's services and the example questions supplied. Is each core service and customer interest answered somewhere in the FAQ? Pass: all core services and interests are covered. Partial: some gaps. Fail: most are not covered. Quote covered questions; list the gaps in the finding.",
       mode: "best",
-      notApplicable: { status: "unable", issue: "Not checked: no FAQ questions were found (see check 2.2)." },
+      notApplicable: { status: "fail", issue: "There's no FAQ, so common questions about your services have no answers on the site (see check 2.2)." },
       fix: "Add an FAQ answer for each core service and each customer theme that's missing (listed in the finding).",
     }),
     C({
@@ -276,7 +276,7 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       rubric:
         "Is each FAQ answer self-contained, so it still makes sense if quoted on its own (it repeats the subject rather than saying \"Yes, we do\" or \"See above\"), and gives a complete answer? Word counts are measured separately by code; judge self-containment and completeness only. Pass: answers stand alone. Partial: some rely on the question or other answers. Fail: most do. Quote answers that are not self-contained.",
       mode: "worst",
-      notApplicable: { status: "unable", issue: "Not checked: no FAQ answers were found (see check 2.2)." },
+      notApplicable: { status: "fail", issue: "There's no FAQ, so there are no stand-alone answers for AI assistants to quote (see check 2.2)." },
       fix: "Make each FAQ answer stand on its own in 40–80 words: restate the subject, give the direct answer first, then one or two supporting facts.",
     }),
 

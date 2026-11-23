@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { API_KEY_NAMES, config, hasKey } from "@/config";
 import { CATEGORIES, CHECKS } from "@/lib/checks/catalogue";
 import { snapshotPages } from "@/lib/checks/cat8";
-import { runCheck } from "@/lib/checks/registry";
+import { getImplementation, runCheck } from "@/lib/checks/registry";
 import type { CheckContext, PageSnapshot, PreviousAudit } from "@/lib/checks/types";
 import { crawlSite, ROLE_LABEL } from "@/lib/crawler/crawl";
 import type { CrawlData } from "@/lib/crawler/types";
@@ -171,7 +171,7 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
         record.results.push(await runCheck(meta, ctx));
       }
     }
-    record.score = computeScore(record.results);
+    record.score = computeScore(record.results, undefined, { notInBuild: new Set(CHECKS.filter((c) => !getImplementation(c.id)).map((c) => c.id)) });
     record.status = "complete";
     record.completedAt = new Date().toISOString();
     progress("Audit complete");

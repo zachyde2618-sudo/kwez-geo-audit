@@ -29,6 +29,8 @@ export interface ScoreSummary {
   coveragePct: number;
   provisional: boolean;
   categories: CategoryScore[];
+  /** Checks this version of the app can't run yet; left out of coverage (and the score). */
+  notInBuild: number;
 }
 
 /**
@@ -36,9 +38,12 @@ export interface ScoreSummary {
  *  check points:  Pass 1, Partial 0.5, Fail 0, Unable to Verify excluded
  *  category score = Σ(points × weight) / Σ(weight of assessable checks) × 100
  *  overall = Σ(category score × category weight) / Σ(weights of categories with ≥1 assessable check)
- *  coverage % = assessable checks' weight / total check weight
+ *  coverage % = assessable checks' weight / total weight of the checks this build can run
+ * Checks in `notInBuild` (not implemented yet) are left out entirely, so coverage measures how
+ * much of what this version can check was actually checked.
  */
-export function computeScore(results: CheckResult[], categories: CategoryDef[] = CATEGORIES): ScoreSummary {
+export function computeScore(results: CheckResult[], categories: CategoryDef[] = CATEGORIES, opts: { notInBuild?: ReadonlySet<string> } = {}): ScoreSummary {
+  const skip = opts.notInBuild ?? new Set<string>();
   let totalCheckWeight = 0;
   let assessableCheckWeight = 0;
 
@@ -49,7 +54,7 @@ export function computeScore(results: CheckResult[], categories: CategoryDef[] =
     let total = 0;
     for (const r of results) {
       const meta = CHECK_BY_ID.get(r.id);
-      if (!meta || meta.categoryId !== cat.id) continue;
+      if (!meta || meta.categoryId !== cat.id || skip.has(r.id)) continue;
       counts[r.status]++;
       total += meta.weight;
       if (r.status === "unable") continue;
@@ -85,6 +90,7 @@ export function computeScore(results: CheckResult[], categories: CategoryDef[] =
     coveragePct,
     provisional: coveragePct < config.thresholds.provisionalCoveragePct,
     categories: catScores,
+    notInBuild: results.filter((r) => skip.has(r.id)).length,
   };
 }
 

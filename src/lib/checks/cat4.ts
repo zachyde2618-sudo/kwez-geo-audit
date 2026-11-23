@@ -22,7 +22,14 @@ export function faqPairs(ctx: Parameters<CheckImpl>[0]) {
 const c44auto = (ctx: Parameters<CheckImpl>[0]): RawCheckResult => {
   const f = faqPairs(ctx);
   if (f && "status" in f) return f;
-  if (!f) return unable("Not checked: no FAQ was found (see check 2.2).");
+  if (!f) {
+    const pages = ctx.data.crawl?.pages.length ?? 0;
+    return {
+      status: "fail",
+      evidence: [ev.measure("FAQ search", `No FAQ page, FAQ heading or FAQPage schema found across ${pages} crawled pages`)],
+      issue: "There's no FAQ, so there are no stand-alone answers for AI assistants to quote (see check 2.2).",
+    };
+  }
   if (!f.pairs.length) return unable("Not checked: no question-and-answer pairs could be read from the FAQ.");
   const { min, max } = config.thresholds.faqAnswerWords;
   const inRange = f.pairs.filter((p) => p.words >= min && p.words <= max);

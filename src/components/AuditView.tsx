@@ -149,6 +149,11 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
             </div>
             <AiReviewWarning audit={audit} />
             <p className="font-mono text-sm" data-testid="score-line">{formatScoreLine(s)}</p>
+            {s.notInBuild > 0 && (
+              <p className="text-xs text-ink-soft">
+                {s.notInBuild} check{s.notInBuild === 1 ? " isn't" : "s aren't"} available in this version yet, so {s.notInBuild === 1 ? "it isn't" : "they aren't"} counted.
+              </p>
+            )}
             {s.band && <p className="text-ink-soft max-w-prose">{BAND_SUMMARY[s.band]}</p>}
             {s.provisional && (
               <p role="note" className="rounded-xl bg-partial-soft px-4 py-3 text-sm text-partial text-left">
