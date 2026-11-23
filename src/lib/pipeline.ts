@@ -11,9 +11,9 @@ import { runSiteReview, type SiteReview } from "@/lib/llm/review";
 import { gatherExternal } from "@/lib/external/gather";
 import { runExternalReview, type ExternalData } from "@/lib/llm/external";
 import type { AuditRecord } from "@/lib/schemas/audit";
-import type { AuditInput } from "@/lib/schemas/input";
+import { parseAuditInput, type AuditInput } from "@/lib/schemas/input";
 import { computeScore } from "@/lib/scoring";
-import { listAudits, loadAudit, saveAudit } from "@/lib/storage";
+import { deleteAuditFile, listAudits, loadAudit, saveAudit } from "@/lib/storage";
 
 /** In-memory registry of running audits. Survives Next dev hot reloads via globalThis. */
 const g = globalThis as unknown as { __kwezJobs?: Map<string, AbortController> };
@@ -21,6 +21,21 @@ const jobs: Map<string, AbortController> = (g.__kwezJobs ??= new Map());
 
 export function isRunning(id: string): boolean {
   return jobs.has(id);
+}
+
+/** Delete an audit. A running audit is cancelled first and given a moment to stop saving. */
+export async function deleteAudit(id: string): Promise<boolean> {
+  if (cancelAudit(id)) {
+    for (let i = 0; i < 50 && jobs.has(id); i++) await new Promise((r) => setTimeout(r, 100));
+  }
+  return deleteAuditFile(id);
+}
+
+/** Start a fresh audit with the same details as an earlier one. Returns the new record, or null. */
+export async function rerunAudit(id: string): Promise<AuditRecord | null> {
+  const old = await loadAudit(id);
+  if (!old) return null;
+  return startAudit(parseAuditInput(old.input, config.crawler.allowLocalTargets));
 }
 
 export function cancelAudit(id: string): boolean {

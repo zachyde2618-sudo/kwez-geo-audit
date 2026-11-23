@@ -32,6 +32,49 @@ export async function loadAudit(id: string): Promise<AuditRecord | null> {
   }
 }
 
+/** Remove an audit's file (and its favourite mark). Returns false if it didn't exist. */
+export async function deleteAuditFile(id: string): Promise<boolean> {
+  if (!isValidAuditId(id)) return false;
+  await setFavourite(id, false);
+  try {
+    await fs.unlink(fileFor(id));
+    return true;
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw e;
+  }
+}
+
+// Favourites live in their own file so a running audit saving its progress can't overwrite them.
+// The leading underscore keeps it from being read as an audit (ids are [a-z0-9-]).
+const favouritesFile = () => path.join(config.storage.auditsDir, "_favourites.json");
+let favouritesLock: Promise<unknown> = Promise.resolve();
+
+export async function loadFavourites(): Promise<Set<string>> {
+  try {
+    const ids = JSON.parse(await fs.readFile(favouritesFile(), "utf8")) as unknown;
+    return new Set(Array.isArray(ids) ? ids.filter((x): x is string => typeof x === "string" && isValidAuditId(x)) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function setFavourite(id: string, on: boolean): Promise<void> {
+  // Serialise read-modify-write so two quick clicks can't lose an update.
+  const run = favouritesLock.then(async () => {
+    const favs = await loadFavourites();
+    if (on === favs.has(id)) return;
+    if (on) favs.add(id);
+    else favs.delete(id);
+    await fs.mkdir(config.storage.auditsDir, { recursive: true });
+    const tmp = `${favouritesFile()}.${process.pid}.${Date.now()}.tmp`;
+    await fs.writeFile(tmp, JSON.stringify([...favs]), "utf8");
+    await fs.rename(tmp, favouritesFile());
+  });
+  favouritesLock = run.catch(() => {});
+  return run;
+}
+
 export async function listAudits(): Promise<AuditSummary[]> {
   let files: string[];
   try {
@@ -39,12 +82,14 @@ export async function listAudits(): Promise<AuditSummary[]> {
   } catch {
     return [];
   }
+  const favourites = await loadFavourites();
   const out: AuditSummary[] = [];
   for (const f of files) {
     if (!f.endsWith(".json")) continue;
     const rec = await loadAudit(f.slice(0, -5)).catch(() => null);
     if (!rec) continue;
     out.push({
+      favourite: favourites.has(rec.id),
       id: rec.id,
       domain: rec.domain,
       companyName: rec.input.companyName,

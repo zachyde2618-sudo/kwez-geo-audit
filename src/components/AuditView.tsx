@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatDate } from "@/lib/format";
+import { auditedOn } from "@/lib/format";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import { formatScoreLine } from "@/lib/scoring";
 import { buildTodo } from "@/lib/todo";
+import { AuditActions } from "./AuditActions";
 import { EyeLoader } from "./Brand";
 import { CategoryBars } from "./CategoryBars";
 import { EvidenceReport } from "./EvidenceReport";
@@ -14,7 +15,7 @@ import { TodoList } from "./TodoList";
 
 const ACTIVE = new Set(["queued", "running"]);
 
-export function AuditView({ id, initial }: { id: string; initial: AuditRecord }) {
+export function AuditView({ id, initial, favourite = false }: { id: string; initial: AuditRecord; favourite?: boolean }) {
   const [audit, setAudit] = useState(initial);
   const [cancelling, setCancelling] = useState(false);
   const [pollError, setPollError] = useState(false);
@@ -42,7 +43,7 @@ export function AuditView({ id, initial }: { id: string; initial: AuditRecord })
 
   if (ACTIVE.has(audit.status)) return <Progress audit={audit} onCancel={cancel} cancelling={cancelling} pollError={pollError} />;
   if (audit.status !== "complete") return <Ended audit={audit} />;
-  return <Results audit={audit} />;
+  return <Results audit={audit} favourite={favourite} />;
 }
 
 function Progress({ audit, onCancel, cancelling, pollError }: { audit: AuditRecord; onCancel: () => void; cancelling: boolean; pollError: boolean }) {
@@ -101,7 +102,7 @@ const BAND_SUMMARY: Record<string, string> = {
   Excellent: "This business is in strong shape for AI discovery.",
 };
 
-function Results({ audit }: { audit: AuditRecord }) {
+function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean }) {
   const s = audit.score!;
   const todo = useMemo(() => buildTodo(audit.results), [audit.results]);
   const counts = s.categories.reduce(
@@ -141,9 +142,10 @@ function Results({ audit }: { audit: AuditRecord }) {
               <p className="text-sm font-medium text-accent">GEO Visibility Score</p>
               <h1 id="results-title" className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight break-words">{name}</h1>
               <p className="mt-1 text-sm text-ink-soft">
-                {audit.domain} · audited {formatDate(audit.createdAt)}
+                {audit.domain} · <time dateTime={audit.createdAt}>audited {auditedOn(audit.createdAt)}</time>
               </p>
               <AiCostLine audit={audit} />
+              <AuditActions id={audit.id} favourite={favourite} />
             </div>
             <AiReviewWarning audit={audit} />
             <p className="font-mono text-sm" data-testid="score-line">{formatScoreLine(s)}</p>

@@ -45,4 +45,5 @@ export interface AuditSummary {
   status: AuditStatus;
   overall: number | null;
   coveragePct: number | null;
+  favourite: boolean;
 }
