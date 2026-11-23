@@ -282,6 +282,14 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
   // ── assets (images, scripts, stylesheets) on the most important pages ──
   const assetPages = [...pages].sort((a, b) => ROLE_PLAN[a.role].priority - ROLE_PLAN[b.role].priority).slice(0, config.crawler.assetPages);
   const assetMap = new Map<string, AssetInfo>();
+  // Each kind gets its own share of the measuring budget: script-heavy themes (Shopify loads
+  // ~30 scripts) used to use it all up before a single image was measured.
+  const share: Record<AssetInfo["kind"], number> = {
+    image: Math.ceil(config.crawler.maxAssets * 0.5),
+    script: Math.ceil(config.crawler.maxAssets * 0.3),
+    stylesheet: Math.ceil(config.crawler.maxAssets * 0.2),
+  };
+  const used: Record<AssetInfo["kind"], number> = { image: 0, script: 0, stylesheet: 0 };
   const addAsset = (url: string, kind: AssetInfo["kind"], page: string) => {
     if (url.startsWith("data:")) return;
     const existing = assetMap.get(url);
@@ -289,13 +297,17 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
       if (!existing.pages.includes(page)) existing.pages.push(page);
       return;
     }
-    if (assetMap.size >= config.crawler.maxAssets) return;
+    if (used[kind] >= share[kind]) return;
+    used[kind]++;
     assetMap.set(url, { url, kind, status: 0, bytes: 0, overLimit: false, contentType: "", thirdParty: !isInternal(url), pages: [page] });
   };
   for (const p of assetPages) {
     p.scripts.forEach((s) => s.src && addAsset(s.src, "script", p.finalUrl));
     p.stylesheets.forEach((s) => addAsset(s.href, "stylesheet", p.finalUrl));
   }
+  // Images: a few from every main page first (most important first on each), then the rest.
+  const perPage = Math.max(1, Math.floor(share.image / Math.max(1, assetPages.length)));
+  for (const p of assetPages) p.images.slice(0, perPage).forEach((i) => addAsset(i.src, "image", p.finalUrl));
   for (const p of assetPages) p.images.forEach((i) => addAsset(i.src, "image", p.finalUrl));
 
   if (assetMap.size) {
