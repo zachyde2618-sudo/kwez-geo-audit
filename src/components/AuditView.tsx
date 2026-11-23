@@ -207,12 +207,29 @@ function SectionHeading({ id, title, sub }: { id: string; title: string; sub?: s
 /** Model, token use and estimated cost of the AI review (estimates from config prices, not invoices). */
 function AiCostLine({ audit }: { audit: AuditRecord }) {
   const ai = audit.extras.aiReview as { model: string; calls: number; tokensUsed: number } | undefined;
-  if (!ai) return null;
+  if (!ai)
+    return audit.extras.webSearch ? (
+      <p className="mt-1 text-xs text-ink-soft">
+        <WebSearchLine audit={audit} />
+      </p>
+    ) : null;
   const usd = audit.costs.filter((c) => c.provider === "anthropic").reduce((t, c) => t + c.usd, 0);
   return (
     <p className="mt-1 text-xs text-ink-soft" data-testid="ai-cost">
       AI review: {ai.model}, {ai.calls} request{ai.calls === 1 ? "" : "s"}, {ai.tokensUsed.toLocaleString("en-GB")} tokens, about ${usd.toFixed(2)}
+      <WebSearchLine audit={audit} />
     </p>
+  );
+}
+
+function WebSearchLine({ audit }: { audit: AuditRecord }) {
+  const w = audit.extras.webSearch as { provider: string; searches: unknown[]; relevantResults: number; sites: string[] } | undefined;
+  if (!w) return null;
+  return (
+    <>
+      <br />
+      Web search ({w.provider === "serper" ? "Google via Serper" : "Brave"}): {w.searches.length} searches, {w.relevantResults} result{w.relevantResults === 1 ? "" : "s"} about this business on {w.sites.length} site{w.sites.length === 1 ? "" : "s"}
+    </>
   );
 }
 

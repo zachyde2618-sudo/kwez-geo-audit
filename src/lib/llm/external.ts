@@ -1,3 +1,4 @@
+import type { GatheredExternal } from "@/lib/external/gather";
 import type { AuditInput } from "@/lib/schemas/input";
 import { packChunks, type PageBlock } from "./chunk";
 import { LlmClient } from "./client";
@@ -17,6 +18,10 @@ export interface ExternalSource {
 }
 
 export interface ExternalData {
+  /** The web searches and classified results (Phase 5), without the source texts below. */
+  gathered?: Omit<GatheredExternal, "mentions" | "reviews">;
+  /** Why the web search stage failed, when it was attempted. */
+  searchError?: string;
   /** Third-party pages mentioning the business (for 9.5 and 9.9). */
   mentions?: ExternalSource[];
   /** Review text from independent platforms (for 9.7). */

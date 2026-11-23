@@ -8,6 +8,8 @@ import { crawlSite } from "@/lib/crawler/crawl";
 import type { CrawlData } from "@/lib/crawler/types";
 import { LlmClient } from "@/lib/llm/client";
 import { runSiteReview, type SiteReview } from "@/lib/llm/review";
+import { gatherExternal } from "@/lib/external/gather";
+import { runExternalReview, type ExternalData } from "@/lib/llm/external";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import type { AuditInput } from "@/lib/schemas/input";
 import { computeScore } from "@/lib/scoring";
@@ -89,15 +91,19 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
     }
     ctx.data.previous = await loadPrevious(record);
 
+    // One AI client for the whole audit, so the site review and web search share the token budget.
+    const client = hasKey("ANTHROPIC_API_KEY")
+      ? new LlmClient({
+          onCost: (c) => {
+            record.costs.push(c);
+            void persist();
+          },
+        })
+      : undefined;
+
     // Stage 3: AI review of page text (LLM-judged checks). Skipped without a key or pages.
-    if (hasKey("ANTHROPIC_API_KEY") && ctx.data.crawl?.pages.length) {
+    if (client && ctx.data.crawl?.pages.length) {
       signal.throwIfAborted();
-      const client = new LlmClient({
-        onCost: (c) => {
-          record.costs.push(c);
-          void persist();
-        },
-      });
       try {
         ctx.data.llm = await runSiteReview({ crawl: ctx.data.crawl, input: record.input, client, signal, progress, concurrency: config.llm.concurrency });
         record.extras.aiReview = aiReviewSummary(ctx.data.llm);
@@ -109,7 +115,36 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
         progress(`AI review failed: ${ctx.data.llmError}`);
       }
     }
-    // Phase 5 inserts the external stage here.
+    // Stage 4: web search for third-party evidence (category 9, 6.2). Skipped without a search key.
+    if (hasKey("SEARCH_API_KEY")) {
+      signal.throwIfAborted();
+      const ext: ExternalData = {};
+      try {
+        const g = await gatherExternal({ input: record.input, signal, progress, client, fetchPages: config.search.fetchPages });
+        const { mentions, reviews, ...gathered } = g;
+        Object.assign(ext, { gathered, mentions, reviews });
+        const fresh = g.searches.filter((x) => !x.cached && !x.error).length;
+        const failed = g.searches.filter((x) => x.error).length;
+        record.costs.push({
+          provider: g.provider,
+          purpose: `Web search: ${g.searches.length} searches (${g.searches.filter((x) => x.cached).length} from cache${failed ? `, ${failed} failed` : ""})`,
+          inputTokens: 0,
+          outputTokens: 0,
+          usd: Math.round(fresh * config.search.usdPerQuery[g.provider] * 10_000) / 10_000,
+        });
+        if (client) {
+          ext.model = client.model;
+          ext.judgements = await runExternalReview({ data: ext, input: record.input, siteReview: ctx.data.llm, client, signal });
+        }
+        record.extras.webSearch = webSearchSummary(ext);
+      } catch (err) {
+        if (signal.aborted) throw err;
+        ext.searchError = err instanceof Error ? err.message : String(err);
+        progress(`Web search failed: ${ext.searchError}`);
+      }
+      ctx.data.external = ext;
+      void persist();
+    }
 
     for (const cat of CATEGORIES) {
       signal.throwIfAborted();
@@ -164,6 +199,21 @@ export function crawlSummary(c: CrawlData) {
 }
 
 /** What the AI saw and concluded, saved with the audit for transparency (quotes are verified). */
+export function webSearchSummary(ext: ExternalData) {
+  const g = ext.gathered;
+  if (!g) return undefined;
+  const about = g.results.filter((r) => r.about === "yes" && r.kind !== "social");
+  return {
+    provider: g.provider,
+    searches: g.searches.map((s) => ({ purpose: s.purpose, query: s.query, count: s.count, cached: s.cached, error: s.error })),
+    classifiedBy: g.classifiedBy,
+    classifyError: g.classifyError,
+    relevantResults: about.length,
+    sites: [...new Set(about.map((r) => r.host))],
+    judgements: Object.values(ext.judgements ?? {}).map((j) => ({ id: j.id, status: j.verdict?.status ?? "error", error: j.error })),
+  };
+}
+
 export function aiReviewSummary(r: SiteReview) {
   return {
     model: r.model,

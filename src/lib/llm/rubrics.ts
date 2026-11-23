@@ -294,7 +294,7 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       id: "9.7",
       label: "Specific reviews",
       rubric:
-        "These are customer reviews from independent platforms. Do they give specific detail an AI could repeat (the service received, the place, timescales, the result, a named staff member) rather than generic praise (\"Great service, would recommend\")? Pass: most reviews are specific. Partial: some are. Fail: almost all are generic. Quote examples.",
+        "These are customer reviews from independent platforms. Do they give specific detail an AI could repeat (the service received, the place, timescales, the result, a named staff member) rather than generic praise (\"Great service, would recommend\")? Pass: most reviews are specific. Partial: some are. Fail: almost all are generic. Quote examples. Answer not_applicable if the sources contain no actual review text (only star ratings, review counts or page furniture).",
       mode: "best",
       notApplicable: { status: "unable", issue: "Not checked: no review text was available to assess." },
       fix: "When you ask for reviews, prompt customers to mention the job, the town and the result, e.g. \"Could you mention what we did and how it went?\"",

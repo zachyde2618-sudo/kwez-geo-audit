@@ -92,10 +92,10 @@ describe("e2e: AI review with valid model output", () => {
     expect(cat3.score).not.toBeNull();
   });
 
-  it("combines A+L checks and leaves Phase 5 external judgements unchecked", () => {
+  it("combines A+L checks and leaves external checks unchecked without a search key", () => {
     expect(audit.results.find((r) => r.id === "2.13")!.status).toBe("fail"); // AI part says fail → worse part decides
-    expect(audit.results.find((r) => r.id === "9.7")!.issue).toMatch(/build phase 5/);
-    expect(CHECK_BY_ID.get("9.7")!.requires).toEqual(["ANTHROPIC_API_KEY"]);
+    expect(audit.results.find((r) => r.id === "9.7")!.issue).toBe("Not checked: SEARCH_API_KEY not configured");
+    expect(CHECK_BY_ID.get("9.7")!.requires).toEqual(["SEARCH_API_KEY", "ANTHROPIC_API_KEY"]);
   });
 
   it("saves what the AI saw and concluded with the audit", () => {

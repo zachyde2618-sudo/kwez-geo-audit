@@ -226,6 +226,13 @@ export const config = {
       serper: "https://google.serper.dev/search",
     },
     resultsPerQuery: 10,
+    /** Approximate USD per query, for the cost line only (check the provider's pricing page). */
+    usdPerQuery: { serper: 0.001, brave: 0.005 },
+    /** Third-party pages (reviews, mentions) fetched for fuller text. EXTERNAL_FETCH_PAGES=0 turns it off. */
+    get fetchPages() {
+      const n = Number(env("EXTERNAL_FETCH_PAGES"));
+      return Number.isFinite(n) && n >= 0 ? Math.min(Math.floor(n), 12) : 6;
+    },
   },
 
   companiesHouse: {
