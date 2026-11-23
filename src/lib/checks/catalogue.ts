@@ -249,7 +249,7 @@ export const CHECKS: CheckMeta[] = [
   c("9.13", "Opportunities on sites AI frequently cites", "Get listed on the sites AI cites most",
     "A listing on a site AI already trusts is one of the quickest routes into AI answers.", "E+L", 2, "Moderate", "kwez", { requiresAny: AI_KEYS, group: G_AI }),
   c("9.14", "Name, website, location, business info (NAP) consistent externally", "Make your name, address and phone number identical everywhere",
-    "Inconsistent business details make AI unsure which information is correct.", "E", 2, "Quick win", "diy", { group: G_ENTITY }),
+    "Inconsistent business details make AI unsure which information is correct.", "E+L", 2, "Quick win", "diy", { requires: ["SEARCH_API_KEY", "ANTHROPIC_API_KEY"], group: G_ENTITY }),
   c("9.15", "Founders correctly associated with company on third-party sites", "Make sure other sites connect your founders to your company",
     "AI relies on third-party pages to confirm who runs a business.", "E", 2, "Moderate", "diy", { ...SEARCH, group: G_ENTITY }),
   c("9.16", "Reputable sources evidence expertise, achievements, relevance", "Win awards, press and accreditations that others publish",

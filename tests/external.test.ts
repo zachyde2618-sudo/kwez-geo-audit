@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { API_KEY_ENV_VARS } from "@/config";
 import { planQueries, ruleKind } from "@/lib/external/gather";
+import { siteDetails } from "@/lib/llm/external";
 import { setSearchTransportForTests, type SearchRequest, type SearchResult } from "@/lib/external/search";
 import { setLlmTransportForTests, type LlmTransport } from "@/lib/llm/client";
 import { executeAudit, newAuditRecord } from "@/lib/pipeline";
@@ -160,11 +161,19 @@ describe("e2e: web search stage", () => {
     expect(r("9.15").issue).not.toMatch(/Jo Bloggs/);
   });
 
-  it("runs the AI judgements on third-party text (9.5, 9.7, 9.9)", () => {
+  it("runs the AI judgements on third-party text (9.5, 9.7, 9.9, 9.14)", () => {
     expect(r("9.5").status).toBe("fail"); // scripted: worst-mode criteria fail
+    expect(r("9.14").status).toBe("fail");
+    expect(r("9.14").requiredChange).toMatch(/name, address and phone number identical/);
     expect(r("9.7").status).toBe("pass");
     expect(r("9.9").status).toBe("pass");
     for (const id of ["9.5", "9.7"]) expect(r(id).evidence.some((e) => e.kind === "snippet")).toBe(true);
+  });
+
+  it("gives the AI the business's own details from its website for 9.14", async () => {
+    const { crawlSite } = await import("@/lib/crawler/crawl");
+    const crawl = await crawlSite(input(), new AbortController().signal, () => {});
+    expect(siteDetails(crawl)).toMatch(/Kirkgate/);
   });
 
   it("ignores results about other businesses and social media when counting", () => {

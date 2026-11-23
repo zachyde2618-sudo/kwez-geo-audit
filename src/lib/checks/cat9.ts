@@ -161,6 +161,8 @@ export const cat9: Record<string, CheckImpl> = {
 
   "9.9": judged("9.9", "third-party sources that could confirm your claims"),
 
+  "9.14": judged("9.14", "your business details on other sites"),
+
   "9.15": searched((g, ctx) => {
     const people = ctx.input.people.map((p) => p.fullName.trim()).filter(Boolean);
     if (!people.length) return unable("Not checked: no people were supplied. Add founders or key staff on the form to check how other sites connect them to the business.");

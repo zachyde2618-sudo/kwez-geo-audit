@@ -308,11 +308,20 @@ export const CRITERIA: Record<string, Criterion> = Object.fromEntries(
       notApplicable: { status: "pass", issue: "" },
       fix: "Make sure each claim on your site can be confirmed elsewhere: get listed on the awarding or accrediting body's register, and link to those pages from your site.",
     }),
+    C({
+      id: "9.14",
+      label: "Consistent business details",
+      rubric:
+        "These are third-party listings and pages about the business. Compare the business name, address, phone number and website they show with the business's own details (in the business context). Ignore formatting differences (spacing, +44 vs 0, abbreviations like Rd/Road). Pass: every source that shows these details matches. Partial: minor differences (an old phone number or address on one listing, a slightly different name). Fail: clear conflicts (a different address or phone number on several listings, or a different business name). Quote the details from the listings. Answer not_applicable if no source shows an address or phone number, or if the website shows none to compare with.",
+      mode: "worst",
+      notApplicable: { status: "unable", issue: "Not checked: none of the listings found show an address or phone number to compare (online-only businesses often have none)." },
+      fix: "Make your business name, address and phone number identical on your website, Google Business Profile and every directory and review listing.",
+    }),
   ].map((c) => [c.id, c]),
 );
 
 /** Criteria judged on third-party sources rather than the crawled site. */
-export const EXTERNAL_CRITERIA = ["9.5", "9.7", "9.9"];
+export const EXTERNAL_CRITERIA = ["9.5", "9.7", "9.9", "9.14"];
 
 export const GROUPS: RubricGroup[] = [
   { id: "answers", label: "Answer structure and language", criteria: ["1.2", "1.3", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7"], pages: "all" },

@@ -151,7 +151,7 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
         });
         if (client) {
           ext.model = client.model;
-          ext.judgements = await runExternalReview({ data: ext, input: record.input, siteReview: ctx.data.llm, client, signal });
+          ext.judgements = await runExternalReview({ data: ext, input: record.input, siteReview: ctx.data.llm, crawl: ctx.data.crawl, client, signal });
         }
         record.extras.webSearch = webSearchSummary(ext);
       } catch (err) {
