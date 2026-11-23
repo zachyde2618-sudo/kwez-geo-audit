@@ -23,7 +23,7 @@ const saved: Record<string, string | undefined> = {};
 
 const input = () =>
   parseAuditInput(
-    { url: server.url, companyName: "Bright Spark Electrical", industry: "Domestic electricians", town: "Leeds", services: ["House rewires", "EV charger installation"] },
+    { url: server.url, options: { runVisibility: false }, companyName: "Bright Spark Electrical", industry: "Domestic electricians", town: "Leeds", services: ["House rewires", "EV charger installation"] },
     true,
   );
 

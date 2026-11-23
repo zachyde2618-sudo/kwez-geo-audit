@@ -32,8 +32,8 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
   const [socialUrls, setSocialUrls] = useState("");
   const [pressUrls, setPressUrls] = useState("");
   const [maxPages, setMaxPages] = useState("25");
-  const [runVisibility, setRunVisibility] = useState(false);
-  const [promptCount, setPromptCount] = useState("20");
+  const [runVisibility, setRunVisibility] = useState(true);
+  const [promptCount, setPromptCount] = useState("10");
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
@@ -104,7 +104,6 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
     setSuggestion(null);
   }
 
-  const aiKeys = ["OPENAI_API_KEY", "GEMINI_API_KEY", "PERPLEXITY_API_KEY", "ANTHROPIC_API_KEY"].filter((k) => keysConfigured.includes(k));
 
   function buildPayload() {
     return {
@@ -330,7 +329,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
           <Field label="Max pages to crawl" help="25 covers most small business sites. More pages take longer." error={errors["options.maxPages"]}>
             {(p) => <input {...p} className="field-input" type="number" min={1} max={100} value={maxPages} onChange={(e) => setMaxPages(e.target.value)} />}
           </Field>
-          <Field label="Number of test prompts" help="Questions sent to each AI assistant (max 100)." error={errors["options.promptCount"]}>
+          <Field label="Number of test prompts" help="Questions asked (max 100). 10 gives a fair picture; more costs more." error={errors["options.promptCount"]}>
             {(p) => <input {...p} className="field-input" type="number" min={1} max={100} disabled={!runVisibility} value={promptCount} onChange={(e) => setPromptCount(e.target.value)} />}
           </Field>
         </div>
@@ -339,8 +338,8 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
           <span>
             <span className="font-medium">Run AI visibility tests</span>
             <span className="block text-sm text-ink-soft">
-              Asks ChatGPT, Gemini, Perplexity and Claude your customers&rsquo; questions and records whether you&rsquo;re mentioned. This uses API credits.{" "}
-              {aiKeys.length ? `Available: ${aiKeys.map((k) => k.replace("_API_KEY", "").toLowerCase()).join(", ")}.` : "No AI keys are configured, so these tests will be marked Unable to Verify."}
+              Asks Claude (with web search) the questions a new customer would ask, and records whether this business is named, who is named instead and which sites are cited. Uses your own example questions if you give at least 3, otherwise writes them. Roughly $0.05–0.10 per question.{" "}
+              {keysConfigured.includes("ANTHROPIC_API_KEY") ? "" : "No Anthropic key is configured, so these tests will be marked Unable to Verify."}
             </span>
           </span>
         </label>

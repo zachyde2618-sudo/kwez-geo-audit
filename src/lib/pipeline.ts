@@ -10,6 +10,7 @@ import { LlmClient } from "@/lib/llm/client";
 import { runSiteReview, type SiteReview } from "@/lib/llm/review";
 import { gatherExternal } from "@/lib/external/gather";
 import { runExternalReview, type ExternalData } from "@/lib/llm/external";
+import { runVisibility } from "@/lib/visibility/run";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import { parseAuditInput, type AuditInput } from "@/lib/schemas/input";
 import { computeScore } from "@/lib/scoring";
@@ -160,6 +161,20 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
         progress(`Web search failed: ${ext.searchError}`);
       }
       ctx.data.external = ext;
+      void persist();
+    }
+
+    // Stage 5: AI visibility tests: ask Claude customers' questions (9.10–9.13).
+    if (record.input.options.runVisibility && client) {
+      signal.throwIfAborted();
+      try {
+        ctx.data.visibility = await runVisibility({ input: record.input, client, signal, progress });
+        record.extras.visibility = ctx.data.visibility;
+      } catch (err) {
+        if (signal.aborted) throw err;
+        ctx.data.visibilityError = err instanceof Error ? err.message : String(err);
+        progress(`AI visibility tests failed: ${ctx.data.visibilityError}`);
+      }
       void persist();
     }
 

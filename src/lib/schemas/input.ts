@@ -105,8 +105,8 @@ export const makeAuditInputSchema = (allowLocal: boolean) => z.object({
   options: z
     .object({
       maxPages: z.coerce.number().int().min(1).max(100).default(25),
-      runVisibility: z.boolean().default(false),
-      promptCount: z.coerce.number().int().min(1).max(100).default(20),
+      runVisibility: z.boolean().default(true),
+      promptCount: z.coerce.number().int().min(1).max(100).default(10),
     })
     .prefault({}),
 });

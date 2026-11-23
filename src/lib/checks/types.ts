@@ -3,6 +3,7 @@ import type { CheckStatus, Effort, Evidence, Impact, Method } from "@/lib/schema
 import type { CrawlData } from "@/lib/crawler/types";
 import type { ExternalData } from "@/lib/llm/external";
 import type { SiteReview } from "@/lib/llm/review";
+import type { VisibilityData } from "@/lib/visibility/run";
 
 export interface PageSnapshot {
   url: string;
@@ -39,6 +40,10 @@ export interface CheckContext {
     llmError?: string;
     /** Third-party texts with AI judgements on them (collected in Phase 5). */
     external?: ExternalData;
+    /** AI visibility test answers (9.10–9.13). */
+    visibility?: VisibilityData;
+    /** Why the AI visibility tests failed, when they were attempted. */
+    visibilityError?: string;
   };
 }
 

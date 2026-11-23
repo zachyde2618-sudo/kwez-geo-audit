@@ -1,3 +1,4 @@
+import { config } from "@/config";
 import { KIND_LABEL, MAX_PEOPLE_SEARCHED, type FoundResult, type GatheredExternal, type SourceKind } from "@/lib/external/gather";
 import type { Evidence } from "@/lib/schemas/check";
 import { MAX_SNIPPET_CHARS } from "@/lib/schemas/check";
@@ -5,6 +6,8 @@ import { ev } from "./helpers";
 import { judgementResult } from "./llm";
 import type { CheckContext, CheckImpl, RawCheckResult } from "./types";
 import { unable } from "./types";
+import { businessIdentity } from "@/lib/external/gather";
+import type { VisibilityData } from "@/lib/visibility/run";
 
 /**
  * External checks (category 9 and 6.2), scored from web search results gathered and classified
@@ -68,7 +71,7 @@ const judged = (id: string, what: string): CheckImpl => (ctx) => {
 
 const STRONG: SourceKind[] = ["news", "industry_publication", "professional_body", "award_or_accreditation"];
 
-export const cat9: Record<string, CheckImpl> = {
+const checks: Record<string, CheckImpl> = {
   // 6.2 lives here because it is scored from the same search data.
   "6.2": searched((g, ctx) => {
     const people = ctx.input.people.map((p) => p.fullName.trim()).filter(Boolean).slice(0, MAX_PEOPLE_SEARCHED);
@@ -181,4 +184,133 @@ export const cat9: Record<string, CheckImpl> = {
     if (rec.length) return { status: "pass", evidence };
     return { status: "fail", evidence, issue: `No awards, accreditations, press coverage or professional bodies mentioning ${g.businessName} were found.` };
   }),
+
+  // ── AI visibility (asking Claude customers' questions) ────────────────────
+  "9.10": visible((v, ctx) => {
+    const { name } = businessIdentity(ctx.input);
+    const answered = v.answers.filter((a) => !a.error);
+    const hits = answered.filter((a) => a.mentioned);
+    const recommended = hits.filter((a) => a.recommended);
+    const evidence = [
+      ev.measure(`Questions asked (${v.label}, with web search)`, `${answered.length} ${v.promptSource === "supplied" ? "of your example questions" : "questions a new customer might ask"}: named in ${hits.length}, recommended in ${recommended.length}`),
+      ...answered.slice(0, 12).map((a) => answerEvidence(a, name)),
+    ];
+    const notes = [`Tested with ${v.label} (${v.model}). ChatGPT, Gemini and Perplexity are added when their API keys are configured.`];
+    if (answered.length && hits.length / answered.length >= config.visibility.passShare) return { status: "pass", evidence, notes };
+    return { status: "fail", evidence, notes, issue: `${v.label} named ${name} in ${hits.length} of ${answered.length} answers to questions a new customer might ask.` };
+  }),
+
+  "9.11": visible((v, ctx) => {
+    const { name, domain } = businessIdentity(ctx.input);
+    const cited = citedHosts(v);
+    if (!cited.length) return unable(`Not checked: ${v.label}'s answers didn't use any websites as sources.`);
+    const yours = new Set([domain, ...listedOn(ctx)]);
+    const citingYou = cited.filter(([h]) => [...yours].some((y) => h === y || h.endsWith(`.${y}`)));
+    const evidence = [ev.measure(`Sites ${v.label} used as sources most`, cited.slice(0, 10).map(([h, n]) => `${h} (${n})`).join(", ")), ...citingYou.slice(0, 3).map(([h, n]) => ev.measure("Cited site that features you", `${h}, cited ${n} time${n === 1 ? "" : "s"}`))];
+    if (citingYou.length) return { status: "pass", evidence };
+    return { status: "fail", evidence, issue: `None of the ${cited.length} sites ${v.label} used as sources when answering customers' questions is your site or a site we found listing ${name}.` };
+  }),
+
+  "9.12": visible((v, ctx) => {
+    const { name } = businessIdentity(ctx.input);
+    const answered = v.answers.filter((a) => !a.error);
+    const tally = new Map<string, { name: string; n: number }>();
+    for (const a of answered)
+      for (const o of new Set(a.others.map((x) => x.toLowerCase()))) {
+        const t = tally.get(o) ?? { name: a.others.find((x) => x.toLowerCase() === o)!, n: 0 };
+        t.n++;
+        tally.set(o, t);
+      }
+    const named = [...tally.values()].sort((a, b) => b.n - a.n);
+    if (!named.length) return unable(`Not checked: ${v.label}'s answers didn't name any businesses to compare with.`);
+    const you = answered.filter((a) => a.mentioned).length;
+    const ahead = named.filter((c) => c.n > you);
+    const evidence = [ev.measure(`Named in ${v.label}'s answers (of ${answered.length})`, [`${name}: ${you}`, ...named.slice(0, 8).map((c) => `${c.name}: ${c.n}`)].join("; "))];
+    if (!ahead.length) return { status: "pass", evidence };
+    return { status: "fail", evidence, issue: `${list(ahead.map((c) => `${c.name} (${c.n})`), 3)} ${ahead.length === 1 ? "is" : "are"} named more often than ${name} (${you}) in ${v.label}'s answers.` };
+  }),
+
+  "9.13": visible((v, ctx) => {
+    const { domain } = businessIdentity(ctx.input);
+    if (!ctx.data.external?.gathered) return unable("Not checked: telling which cited sites already list you needs the web search (SEARCH_API_KEY).");
+    const listed = listedOn(ctx);
+    const third = citedHosts(v).filter(([h]) => h !== domain && !h.endsWith(`.${domain}`)).slice(0, 6);
+    if (!third.length) return unable(`Not checked: ${v.label}'s answers didn't use any other websites as sources.`);
+    const on = third.filter(([h]) => listed.some((l) => h === l || h.endsWith(`.${l}`) || l.endsWith(`.${h}`)));
+    const missing = third.filter((t) => !on.includes(t));
+    const evidence = [ev.measure(`Sites ${v.label} uses as sources most`, third.map(([h, n]) => `${h} (${n})${on.some(([x]) => x === h) ? " ✓ lists you" : ""}`).join(", "))];
+    if (on.length >= Math.ceil(third.length / 2)) return { status: "pass", evidence };
+    return { status: "fail", evidence, issue: `You weren't found on ${list(missing.map(([h]) => h), 4)}, among the sites ${v.label} uses most as sources when answering your customers' questions.` };
+  }),
 };
+
+// ── Helpers for the AI visibility checks ────────────────────────────────────
+function needVisibility(ctx: CheckContext): VisibilityData | RawCheckResult {
+  if (!ctx.input.options.runVisibility) return unable("Not checked: the AI visibility tests were switched off for this audit. Turn them on in the form's options to see whether AI assistants recommend this business.");
+  if (ctx.data.visibilityError) return unable(`Not checked: the AI visibility tests failed (${ctx.data.visibilityError}).`);
+  if (!ctx.data.visibility) return unable("Not checked: the AI visibility tests did not run.");
+  return ctx.data.visibility;
+}
+function visible(score: (v: VisibilityData, ctx: CheckContext) => RawCheckResult): CheckImpl {
+  return (ctx) => {
+    const v = needVisibility(ctx);
+    return isResult(v) ? v : score(v, ctx);
+  };
+}
+
+function answerEvidence(a: VisibilityData["answers"][number], name: string): Evidence {
+  let excerpt: string;
+  if (a.mentioned) {
+    const i = a.text.toLowerCase().indexOf(name.toLowerCase());
+    excerpt = i >= 0 ? `…${a.text.slice(Math.max(0, i - 80), i + 160).replace(/\s+/g, " ")}…` : a.text.slice(0, 200);
+  } else excerpt = a.others.length ? `Named instead: ${list(a.others, 5)}` : "No businesses named.";
+  return { kind: "api", label: `${a.mentioned ? (a.recommended ? "✓ Recommended" : "✓ Named") : "✗ Not named"}: "${a.prompt}"`, value: clip(excerpt), verification: "verified_externally" };
+}
+
+/** Hosts cited across all answers, most cited first. */
+function citedHosts(v: VisibilityData): [string, number][] {
+  const n = new Map<string, number>();
+  for (const a of v.answers)
+    for (const c of a.cited) {
+      try {
+        const h = new URL(c.url).hostname.replace(/^www\./, "");
+        n.set(h, (n.get(h) ?? 0) + 1);
+      } catch {
+        // ignore bad URLs
+      }
+    }
+  return [...n].sort((a, b) => b[1] - a[1]);
+}
+
+/** Sites the web search found listing or mentioning the business. */
+function listedOn(ctx: CheckContext): string[] {
+  const g = ctx.data.external?.gathered as GatheredExternal | undefined;
+  return g ? hosts(relevant(g)) : [];
+}
+
+/** Plain-English fixes, shown in the to-do list when a check fails. */
+const FIXES: Record<string, string> = {
+  "6.2": "Get your founders and key people published and listed: write or contribute articles for trade publications, speak at industry events, and make sure professional registrations and titles appear on their profiles and your site.",
+  "9.1": "Get mentioned on reputable sites: local and trade press, industry associations and well-known directories. Pitch stories, join associations that list members, and keep a press page that links to the coverage.",
+  "9.2": "List the business in the main directories for your trade and area (and Companies House details where relevant), and pitch your news to local and trade publications.",
+  "9.3": "Earn links from respected sites in your field: supplier and partner pages, trade associations, local organisations and press coverage that link to your site.",
+  "9.4": "Get included in \"best of\" lists and comparisons: contact the authors of the lists that appear for your trade and area, and ask happy customers to nominate you for local awards.",
+  "9.6": "Collect reviews on independent platforms (Google, Trustpilot and the review sites for your trade): ask every happy customer, and link to your profiles from your site and emails.",
+  "9.8": "Ask clients to reference your work on their own sites (case studies, partner pages, testimonials with their name and company), and link to those pages from your site.",
+  "9.10": "Make it easy for AI assistants to recommend you: be listed on the sites they cite (check 9.13), collect independent reviews, get included in \"best of\" lists, and say plainly on your site what you do, for whom and where.",
+  "9.11": "Get your business onto the sites AI assistants cite for your market (see check 9.13), and make sure your own pages answer the questions customers ask.",
+  "9.12": "Close the gap with the businesses AI names instead of you: find out where they're listed, reviewed and written about, and get the same coverage.",
+  "9.13": "Get listed, reviewed or written about on the sites AI assistants cite most for your market. Start with the ones named in this check.",
+  "9.15": "Make sure other sites connect your people to the business: company pages on LinkedIn and directories, author bylines, speaker bios and Companies House should all name them with the company.",
+  "9.16": "Win and publicise recognition from others: awards, accreditations, trade body membership and press coverage, each with a page on the awarding site that names you.",
+};
+
+export const cat9: Record<string, CheckImpl> = Object.fromEntries(
+  Object.entries(checks).map(([id, impl]) => [
+    id,
+    async (ctx) => {
+      const r = await impl(ctx);
+      return (r.status === "fail" || r.status === "partial") && !r.requiredChange && FIXES[id] ? { ...r, requiredChange: FIXES[id] } : r;
+    },
+  ]),
+);

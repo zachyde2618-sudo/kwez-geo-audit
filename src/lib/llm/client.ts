@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { BetaMessage, MessageCreateParamsNonStreaming } from "@anthropic-ai/sdk/resources/beta/messages/messages";
+import type { BetaMessage, BetaMessageParam, MessageCreateParamsNonStreaming } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { config, getKey } from "@/config";
 import type { CostEntry } from "@/lib/schemas/audit";
 
@@ -97,6 +97,50 @@ export class LlmClient {
 
   get remainingTokens() {
     return Math.max(0, this.cap - this.usedTokens);
+  }
+
+  /**
+   * A plain request (no structured output), e.g. asking Claude a customer's question with web
+   * search on, as the AI visibility tests do. Counts towards the audit's token budget and cost
+   * log, including server tool use (web searches), and continues paused turns.
+   */
+  async converse(params: Omit<LlmParams, "max_tokens"> & { max_tokens?: number }, opts: { purpose: string; signal: AbortSignal }): Promise<BetaMessage> {
+    const messages = [...params.messages];
+    let last: BetaMessage | undefined;
+    for (let turn = 0; turn < 4; turn++) {
+      opts.signal.throwIfAborted();
+      const inputEstimate = estimateTokens(JSON.stringify(params.system ?? "").length + JSON.stringify(messages).length) + 15_000; // search results
+      if (this.remainingTokens - inputEstimate < 2_000) throw new LlmBudgetError(this.usedTokens, this.cap);
+      const res = await this.transport(
+        {
+          ...params,
+          model: params.model ?? this.model,
+          max_tokens: Math.min(params.max_tokens ?? 4_000, config.llm.maxOutputTokensPerCall),
+          messages,
+          betas: ["server-side-fallback-2026-07-01"],
+          fallbacks: "default",
+        },
+        { signal: opts.signal },
+      );
+      this.calls++;
+      const inTok = res.usage.input_tokens + (res.usage.cache_creation_input_tokens ?? 0) + (res.usage.cache_read_input_tokens ?? 0);
+      const outTok = res.usage.output_tokens;
+      const searches = res.usage.server_tool_use?.web_search_requests ?? 0;
+      this.usedTokens += inTok + outTok;
+      this.onCost({
+        provider: "anthropic",
+        purpose: `${opts.purpose}${turn ? ` (continued)` : ""}${searches ? `, ${searches} web search${searches === 1 ? "" : "es"}` : ""} [${res.model}]`,
+        inputTokens: inTok,
+        outputTokens: outTok,
+        usd: Math.round((estimateUsd(inTok, outTok) + searches * config.pricingUsdPerMTok.anthropicWebSearchPerRequest) * 10_000) / 10_000,
+      });
+      if (!last) last = res;
+      else last = { ...res, content: [...last.content, ...res.content] };
+      if (res.stop_reason !== "pause_turn") return last;
+      // A long server-tool turn paused: send the partial answer back so Claude carries on.
+      messages.push({ role: "assistant", content: res.content } as unknown as BetaMessageParam);
+    }
+    return last!;
   }
 
   async judge<T>(req: JudgeRequest<T>): Promise<T> {

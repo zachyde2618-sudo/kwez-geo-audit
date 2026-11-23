@@ -175,7 +175,10 @@ export const config = {
   /** AI visibility tests (9.10–9.13). */
   visibility: {
     cacheHours: 24,
-    defaultPromptCount: 20,
+    /** 9.10 passes when the business is named in at least this share of answers. */
+    passShare: 0.2,
+    /** 10 questions with Claude and web search cost roughly $0.50–1 per audit. */
+    defaultPromptCount: 10,
     maxPromptCount: 100,
     providers: {
       anthropic: {
@@ -247,6 +250,8 @@ export const config = {
   pricingUsdPerMTok: {
     /** Claude Sonnet 5.5 (the default judge and visibility model). */
     anthropic: { input: 2, output: 10 },
+    /** Claude's server-side web search: $10 per 1,000 searches. */
+    anthropicWebSearchPerRequest: 0.01,
     openai: { input: 1.25, output: 10 },
     gemini: { input: 0.3, output: 2.5 },
     perplexity: { input: 1, output: 1, perRequest: 0.005 },

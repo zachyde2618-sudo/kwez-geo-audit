@@ -80,7 +80,7 @@ function fakeAi(): LlmTransport {
 }
 
 const input = (people = [{ fullName: "Jo Bloggs", jobTitle: "Managing Director" }, { fullName: "Sam Patel", jobTitle: "Lead EV Installer" }]) =>
-  parseAuditInput({ url: server.url, companyName: "Bright Spark Electrical", industry: "Domestic electricians", town: "Leeds", people }, true);
+  parseAuditInput({ url: server.url, options: { runVisibility: false }, companyName: "Bright Spark Electrical", industry: "Domestic electricians", town: "Leeds", people }, true);
 
 beforeAll(async () => {
   for (const k of API_KEY_ENV_VARS) {

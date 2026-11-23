@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { auditedOn } from "@/lib/format";
 import type { AuditRecord } from "@/lib/schemas/audit";
+import type { VisibilityData } from "@/lib/visibility/run";
 import { formatScoreLine } from "@/lib/scoring";
 import { buildTodo } from "@/lib/todo";
 import { AuditActions } from "./AuditActions";
@@ -264,9 +265,49 @@ function AiReviewWarning({ audit }: { audit: AuditRecord }) {
 }
 
 function VisibilityPlaceholder({ audit }: { audit: AuditRecord }) {
+  const v = audit.extras.visibility as VisibilityData | undefined;
+  if (v?.answers?.length) return <VisibilityResults v={v} name={audit.input.companyName || audit.domain} />;
   const r = audit.results.find((x) => x.id === "9.10");
   const reason = !audit.input.options.runVisibility
-    ? "AI visibility tests were switched off for this audit. Turn them on in the form's options to see how often ChatGPT, Gemini, Perplexity and Claude mention this business."
+    ? "AI visibility tests were switched off for this audit. Turn them on in the form's options to see whether AI assistants recommend this business."
     : r?.issue || "AI visibility results will appear here.";
   return <p className="rounded-2xl border border-dashed border-line bg-card p-6 text-sm text-ink-soft">{reason}</p>;
+}
+
+function VisibilityResults({ v, name }: { v: VisibilityData; name: string }) {
+  const answered = v.answers.filter((a) => !a.error);
+  const hits = answered.filter((a) => a.mentioned).length;
+  const pct = answered.length ? Math.round((hits / answered.length) * 100) : 0;
+  return (
+    <div className="rounded-2xl border border-line bg-card">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line px-5 py-4">
+        <p className="text-3xl font-bold tabular-nums" style={{ fontFamily: "var(--font-display)" }}>
+          {hits}/{answered.length}
+        </p>
+        <p className="text-sm text-ink-soft">
+          {v.label} named <span className="font-medium text-ink">{name}</span> in {pct}% of answers to {v.promptSource === "supplied" ? "your example questions" : "questions a new customer might ask"} (with web search on).
+        </p>
+      </div>
+      <ul className="divide-y divide-line">
+        {v.answers.map((a, i) => (
+          <li key={i} className="flex gap-3 px-5 py-3 text-sm">
+            <span aria-hidden className={`mt-0.5 shrink-0 font-semibold ${a.error ? "text-unable" : a.mentioned ? "text-pass" : "text-fail"}`}>
+              {a.error ? "–" : a.mentioned ? "✓" : "✗"}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-medium">&ldquo;{a.prompt}&rdquo;</span>
+              <span className="block text-ink-soft">
+                {a.error
+                  ? `Not answered (${a.error}).`
+                  : a.mentioned
+                    ? a.recommended ? "Recommended." : "Named, but not recommended."
+                    : a.others.length ? `Named instead: ${a.others.slice(0, 5).join(", ")}${a.others.length > 5 ? "…" : ""}` : "Not named. No specific businesses recommended."}
+                <span className="sr-only">{a.error ? "" : a.mentioned ? " (named)" : " (not named)"}</span>
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

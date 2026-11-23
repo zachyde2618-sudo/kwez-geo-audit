@@ -28,7 +28,7 @@ describe("parseAuditInput", () => {
     const i = parseAuditInput({ url: "example.co.uk" });
     expect(i.url).toBe("https://example.co.uk/");
     expect(i.country).toBe("United Kingdom");
-    expect(i.options).toEqual({ maxPages: 25, runVisibility: false, promptCount: 20 });
+    expect(i.options).toEqual({ maxPages: 25, runVisibility: true, promptCount: 10 });
     expect(i.people).toEqual([]);
   });
 
