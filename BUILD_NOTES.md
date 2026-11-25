@@ -10,10 +10,12 @@ Handover notes for continuing the build. The full product brief was given in the
 | 2. Polite crawler + automated checks (categories 1, 2, 5, automated parts of 6 and 8), form prefill, fixture site e2e | Done |
 | 3. Scoring engine (tested), animated ScoreGauge, category bars, prioritised to-do list, results layout | Done |
 | 4. LLM checks: categories 3, 4, 7 + LLM parts of 1.2, 1.3, 1.4, 2.3, 2.4, 2.13, 6.3, 6.5, 6.8, 7.2, 7.6, 8.1, 8.5, 9.5, 9.7, 9.9 | Done (9.5/9.7/9.9 judges built; their sources arrive in Phase 5) |
-| 5. External checks: PageSpeed, web search, review URLs, Companies House, AI visibility prompt runner (9.10–9.13), share of voice, cited domains | **Next** |
-| 6. Polish: past audits compare, print report (A4), CSV/JSON export, error/loading states, README | To do |
+| 5. External checks: web search (Serper/Brave) for 6.2, 9.1–9.9, 9.14–9.16; AI visibility with Claude (9.10–9.13) | Done. Still to do: PageSpeed (2.1), Companies House, ChatGPT/Gemini/Perplexity visibility |
+| 6. Polish | Partly done: branding and eye loaders, paste box, past audits (favourites, delete, run again), balanced crawl on big sites. To do: client-ready report (PDF/share link), CSV/JSON export, hosting |
 
-Run: `npm install`, `npm run dev`. Tests: `npm test` (129 passing). Demo site: `npm run fixture` (port 4010), then audit `http://localhost:4010` with `ALLOW_LOCAL_TARGETS=true`.
+Run: `npm install`, `ALLOW_LOCAL_TARGETS=true npm run dev`. Tests: `npm test` (~185 passing). Demo site: `npm run fixture` (port 4010), then audit `http://localhost:4010`. See `CLAUDE.md` for the current overview; this file keeps the detailed decisions.
+
+Live reference run (sairaskin.co.uk, a 230-page Shopify skincare brand, 25 pages): coverage 90%, score ~35, named in 0 of 10 Claude answers, about $1.75 in API costs.
 
 ## Decisions agreed with the owner
 
@@ -23,7 +25,7 @@ Run: `npm install`, `npm run dev`. Tests: `npm test` (129 passing). Demo site: `
 - **Bot user-agent probes (1.1, 1.6):** homepage only, our token appended; a block is reported as **Partial, "indicative only"**, never Fail.
 - **Priority numbers:** impact High/Medium/Low = 3/2/1; effort Quick win/Moderate/Major = 1/2/3. Groups by effort: Do this week / Do this month / Bigger projects.
 - **Checks:** one file per category (`src/lib/checks/catN.ts`), each check a separately exported implementation with a stable ID; metadata in `catalogue.ts`.
-- **Partial** allowed only on 1.6, 1.7, 2.6, 2.7, 8.1, 9.3; enforced in `finaliseResult` (also: no evidence → Unable to Verify; Pass clears issue/change; snippets ≤ 300 chars).
+- **Partial** allowed only where the catalogue sets `allowsPartial` (e.g. 1.6, 1.7, 2.6, 2.7, 8.1, 9.3); enforced in `finaliseResult` (also: no evidence → Unable to Verify; Pass clears issue/change; snippets ≤ 300 chars).
 - **Added `COMPANIES_HOUSE_API_KEY`** (free) to the env list.
 - Google reviews / Google Business Profile are recorded but never scraped; LinkedIn is never scraped.
 - A robots.txt network error is Unable to Verify, not Fail; only HTTP 5xx counts as disallow-all.
