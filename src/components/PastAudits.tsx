@@ -69,14 +69,14 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
             role="tab"
             aria-selected={filter === key}
             onClick={() => setFilter(key)}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${filter === key ? "bg-ink text-paper" : "text-ink-soft hover:bg-accent-soft hover:text-accent-strong"}`}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${filter === key ? "bg-ink text-paper" : "text-ink-soft hover:bg-accent-soft hover:text-accent-strong"}`}
           >
             {label}
           </button>
         ))}
       </div>
       {error && (
-        <p role="alert" className="mt-4 rounded-xl bg-fail-soft px-4 py-2.5 text-sm text-fail">
+        <p role="alert" className="mt-4 rounded-input bg-fail-soft px-4 py-2.5 text-sm text-fail">
           {error}
         </p>
       )}
@@ -85,7 +85,7 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
           {filter === "favourites" ? "No favourites yet. Click the star next to an audit to keep it here." : "No audits left."}
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-line rounded-2xl border border-line bg-card">
+        <ul className="mt-4 divide-y divide-line rounded-card border border-line bg-card">
           {shown.map((a) => (
             <li key={a.id} className="flex items-center gap-2 px-3 sm:px-4 py-3">
               <button
@@ -94,15 +94,17 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
                 aria-pressed={a.favourite}
                 aria-label={`${a.favourite ? "Remove" : "Add"} ${a.companyName || a.domain} ${a.favourite ? "from" : "to"} favourites`}
                 title={a.favourite ? "Remove from favourites" : "Add to favourites"}
-                className={`grid size-9 shrink-0 place-items-center rounded-full text-xl leading-none hover:bg-accent-soft ${a.favourite ? "text-brand" : "text-line hover:text-brand"}`}
+                className={`grid size-9 shrink-0 place-items-center rounded-full text-xl leading-none hover:bg-accent-soft ${a.favourite ? "text-brand" : "text-muted hover:text-brand"}`}
               >
                 {a.favourite ? "★" : "☆"}
               </button>
-              <Link href={`/audits/${a.id}`} className="flex min-w-0 flex-1 items-center gap-4 rounded-lg px-2 py-1 hover:bg-paper/60">
+              <Link href={`/audits/${a.id}`} className="flex min-w-0 flex-1 items-center gap-4 rounded-input px-2 py-1 hover:bg-paper/60">
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{a.companyName || a.domain}</span>
-                  <span className="block truncate text-xs text-ink-soft">
-                    {a.domain} · <time dateTime={a.createdAt}>Audited {auditedOn(a.createdAt)}</time>
+                  <span className="block truncate font-semibold">{a.companyName || a.domain}</span>
+                  <span className="block break-words text-xs text-ink-soft">
+                    {a.domain}
+                    <br />
+                    <time dateTime={a.createdAt}>Audited {auditedOn(a.createdAt)}</time>
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
@@ -113,10 +115,10 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
               {confirming === a.id ? (
                 <span className="flex shrink-0 items-center gap-1.5 text-sm">
                   <span className="hidden sm:inline text-ink-soft">Delete?</span>
-                  <button onClick={() => remove(a)} disabled={busy === a.id} className="rounded-lg bg-fail px-3 py-1.5 font-medium text-white disabled:opacity-60">
+                  <button onClick={() => remove(a)} disabled={busy === a.id} className="min-h-9 whitespace-nowrap rounded-input bg-fail px-3 py-1.5 font-semibold text-accent-ink">
                     {busy === a.id ? "Deleting…" : "Delete"}
                   </button>
-                  <button onClick={() => setConfirming(null)} className="rounded-lg px-2 py-1.5 text-ink-soft hover:text-ink">
+                  <button onClick={() => setConfirming(null)} className="rounded-input px-2 py-1.5 text-ink-soft hover:text-ink">
                     Cancel
                   </button>
                 </span>
@@ -126,7 +128,7 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
                     onClick={() => rerun(a)}
                     disabled={!ready || busy === a.id}
                     title="Start a new audit with the same details"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-sm font-medium hover:border-accent hover:text-accent disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-input border border-line px-2.5 py-1.5 text-sm font-semibold hover:border-accent hover:text-accent disabled:opacity-60"
                   >
                     {busy === a.id ? <EyeLoader size={16} label={null} halo={false} /> : <span aria-hidden>↻</span>}
                     <span className="hidden sm:inline">Run again</span>
@@ -137,7 +139,7 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
                     disabled={!ready}
                     aria-label={`Delete the audit of ${a.companyName || a.domain} from ${auditedOn(a.createdAt)}`}
                     title="Delete"
-                    className="grid size-9 place-items-center rounded-lg text-ink-soft hover:bg-fail-soft hover:text-fail"
+                    className="grid size-9 place-items-center rounded-input text-ink-soft hover:bg-fail-soft hover:text-fail"
                   >
                     <svg aria-hidden viewBox="0 0 20 20" className="size-4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5 5.5l.8 10.6a1.5 1.5 0 0 0 1.5 1.4h5.4a1.5 1.5 0 0 0 1.5-1.4L15 5.5M8.5 9v5M11.5 9v5" />

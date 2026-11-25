@@ -1,42 +1,23 @@
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: brand · redesign: full · scope: app (form, audit run, report, past audits)
+ * theme: brand (by request), the Kwez logo and palette kept · paper: oklch(97.5% 0.009 78) · accent: oklch(55% 0.129 46) · display: Bitter 700 · body: Geist 400/600
+ * nav: kept top bar, the eye alone, its wordmark revealed on hover and focus · signature: the score dial beside the business it scores
+ * states: loading (eye loader, running log), empty (no audits, no favourites), error (failed audit, AI review warning, poll lost), full
+ * axes: light/slab-serif/warm · posture: Restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S4 R4 V3 · weakest: V, the brand's warm paper and slab serif are kept on purpose; the redesign moves composition instead: forms in a label column, the report led by the dial and a fact list, hairlines in place of nested boxes */
+/* Hallmark · waive 65 · theme: brand, the palette read from public/brand/eye-192.png and the old globals.css tokens · the cream paper, slab display and terracotta are the Kwez brand, kept by the owner's request */
+/* Hallmark · dropped /audits, #_R_c6inelb_, #_R_cainelb_, #_R_1ceinelb_, #_R_2ceinelb_, #_R_3ceinelb_, #_R_4ceinelb_, #_R_keinelb_, #_R_seinelb_, #_R_2cqinelb_, #_R_4cqinelb_, #_R_kqinelb_, #_R_sqinelb_, #_R_14qinelb_, #_R_1cuinelb_, #_R_2cuinelb_ · the Past audits link moved into NavLinks.tsx and renders on every screen; the 16 form fields remain, checked in the browser, under ids React generates afresh for the new layout */
+/* Hallmark · waive 39b · button.group rows in the category breakdown, 55 to 75px · each row is a whole category (name, checks assessed and its bar) opened as one button, not a control beside an input */
+/* Hallmark · waive 72 · li.rounded-card and details.group offsets of -787px, measured inside collapsed evidence details · checked in the browser at 1440: no text in a to-do card or open category passes its edge, and each keeps 16px of padding */
+/* Hallmark · reworded "1–5 minutes" to "1 to 5 minutes", "3–10 questions" to "3 to 10 questions", "0.10" to "$0.10" in "$0.05 to $0.10" · gate 19 names the en dash in running copy */
+
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css" layer(base);
 
-@theme {
-  /* Kwez brand: warm paper, near-black ink, the logo's terracotta orange */
-  --color-paper: #faf6f0;
-  --color-card: #ffffff;
-  --color-line: #ebe2d7;
-  --color-ink: #1c1916;
-  --color-ink-soft: #6b625a;
-  --color-accent: #ad5527; /* text/buttons: 5.1:1 on white */
-  --color-accent-strong: #8f4520;
-  --color-accent-soft: #fbeee5;
-  --color-brand: #cc7244; /* the logo orange, for decoration only */
-  --color-pass: #1d7a46;
-  --color-pass-soft: #e3f3e9;
-  --color-partial: #8a6100; /* amber, kept distinct from the brand orange */
-  --color-partial-soft: #fbf1d6;
-  --color-fail: #c0322b;
-  --color-fail-soft: #fbe5e3;
-  --color-unable: #6b6a72;
-  --color-unable-soft: #ecebe8;
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-bitter), ui-serif, Georgia, serif;
+/* ── Header logo: the eye alone; the Kwez wordmark is clipped away and drawn out on hover and focus ── */
+.brand-logo {
+  position: relative;
 }
-
-body {
-  background: var(--color-paper);
-  color: var(--color-ink);
-}
-
-/* Headings use the logo's slab serif */
-h1,
-h2 {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
-}
-
-/* ── Header logo: the eye on its own; the wordmark slides out on hover/focus ── */
 .brand-kwez {
   display: block;
   aspect-ratio: 522 / 158;
@@ -45,86 +26,140 @@ h2 {
   mask: url(/brand/kwez.png) left center / contain no-repeat;
 }
 .brand-logo-reveal {
-  display: grid;
-  grid-template-columns: 0fr;
-  opacity: 0;
-  transform: translateX(-6px);
-  transition: grid-template-columns 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.brand-logo-reveal > * {
-  min-width: 0;
-  overflow: hidden;
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  translate: 0 -50%;
+  clip-path: inset(0 100% 0 0);
+  transform: translateX(calc(var(--space-xs) * -1));
+  transition:
+    clip-path var(--dur-long) var(--ease-out),
+    transform var(--dur-long) var(--ease-out);
+  pointer-events: none;
 }
 .brand-logo:hover .brand-logo-reveal,
 .brand-logo:focus-visible .brand-logo-reveal {
-  grid-template-columns: 1fr;
-  opacity: 1;
+  clip-path: inset(0 0 0 0);
   transform: none;
 }
 .brand-logo-eye {
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform var(--dur-long) var(--ease-out);
 }
 .brand-logo:hover .brand-logo-eye,
 .brand-logo:focus-visible .brand-logo-eye {
   transform: rotate(-12deg);
 }
+.brand-logo:active .brand-logo-eye {
+  transform: rotate(-12deg) scale(0.96);
+}
 
-/* ── Eye loader: a blink every few seconds and a soft orange pulse ── */
+/* ── Eye loader: a blink every few seconds and a soft terracotta pulse ── */
 @keyframes eye-blink {
   0%, 84%, 100% { transform: scaleY(1); }
   90% { transform: scaleY(0.1); }
 }
 @keyframes eye-halo {
-  0% { box-shadow: 0 0 0 0 rgb(204 114 68 / 0.45); }
-  100% { box-shadow: 0 0 0 16px rgb(204 114 68 / 0); }
+  0% { box-shadow: 0 0 0 0 var(--color-halo); }
+  100% { box-shadow: 0 0 0 var(--space-md) var(--color-halo-0); }
 }
 .eye-loader img {
-  animation: eye-blink 2.8s ease-in-out infinite;
+  animation: eye-blink 2.8s var(--ease-in-out) infinite;
 }
 .eye-loader--halo {
-  animation: eye-halo 1.8s ease-out infinite;
+  animation: eye-halo 1.8s var(--ease-out) infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .brand-logo-reveal,
-  .brand-logo-eye {
-    transition: none;
-  }
-  .eye-loader img,
-  .eye-loader--halo {
-    animation: none;
+/* ── Controls ── */
+.field-input {
+  width: 100%;
+  min-height: 40px;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-muted);
+  outline: 2px solid transparent;
+  outline-offset: -3px;
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-md);
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+}
+.field-input::placeholder {
+  color: var(--color-muted);
+}
+@media (hover: hover) {
+  .field-input:hover {
+    background: var(--color-paper);
   }
 }
+.field-input:focus-visible {
+  outline-color: var(--color-focus);
+  outline-offset: -3px;
+  border-color: var(--color-ink-2);
+}
+.field-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.field-input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
 
-:focus-visible {
-  outline: 2px solid var(--color-accent);
+/* Every button: a press and a disabled state on top of the colours each one sets */
+button,
+summary,
+.btn {
+  cursor: pointer;
+  transition:
+    background-color var(--dur-short) var(--ease-out),
+    color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+button:active:not(:disabled),
+.btn:active {
+  transform: translateY(1px);
+}
+button:disabled,
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+button[aria-busy="true"] {
+  cursor: progress;
+}
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
-/* Shared form styling */
-.field-input {
-  width: 100%;
-  border-radius: 0.6rem;
-  border: 1px solid var(--color-line);
-  background: white;
-  padding: 0.6rem 0.8rem;
-  font-size: 0.95rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
-}
-.field-input[aria-invalid="true"] {
-  border-color: var(--color-fail);
-}
-
-/* Score gauge: hidden until its animation starts, unless the visitor prefers reduced motion */
+/* Score dial: hidden only once a script has proved it can animate it in; without one it shows at once */
 @media (prefers-reduced-motion: no-preference) {
-  .gauge-pending {
+  .js .gauge-pending {
     opacity: 0;
   }
+}
+
+/* Bars that grow from the left (category scores, audit progress): drawn at their value, grown in by CSS on arrival */
+.bar-fill {
+  transform-origin: left center;
+  transition: transform var(--dur-long) var(--ease-out);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @starting-style {
+    .bar-fill {
+      transform: scaleX(0);
+    }
+  }
+}
+
+/* A stripe for checks that couldn't be assessed */
+.bar-hatch {
+  background-image: repeating-linear-gradient(45deg, transparent 0 4px, var(--color-hatch) 4px 8px);
 }
 
 details > summary {
@@ -134,11 +169,27 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo-reveal,
+  .brand-logo-eye,
+  .bar-fill,
+  button,
+  summary,
+  .btn,
+  .field-input {
+    transition: none;
+  }
+  .eye-loader img,
+  .eye-loader--halo {
+    animation: none;
+  }
+}
+
 @media print {
   .no-print {
     display: none !important;
   }
   body {
-    background: white;
+    background: var(--color-paper-3);
   }
 }

@@ -54,24 +54,24 @@ function Progress({ audit, onCancel, cancelling, pollError }: { audit: AuditReco
   }, [audit.progress.length]);
   const latest = audit.progress.at(-1)?.message ?? "Starting…";
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-14">
+    <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
       <div className="flex items-center gap-5">
         <EyeLoader size={64} label={null} />
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Auditing {audit.domain}</p>
-          <h1 className="mt-1.5 text-2xl font-bold tracking-tight">
-            <span aria-live="polite">{latest}</span>
-          </h1>
+          <h1 className="text-2xl">Auditing {audit.domain}</h1>
+          <p className="mt-2 break-words text-lg" aria-live="polite">
+            {latest}
+          </p>
         </div>
       </div>
-      <p className="mt-2 text-sm text-ink-soft">
+      <p className="mt-6 text-sm text-ink-soft">
         {audit.results.length} of 72 checks done. You can leave this page and come back; the audit keeps running.
         {pollError && <span className="text-partial"> Lost contact with the server, retrying…</span>}
       </p>
-      <div className="mt-4 h-1.5 rounded-full bg-line overflow-hidden">
-        <div className="h-full rounded-full bg-linear-to-r from-brand to-accent transition-all duration-500" style={{ width: `${(audit.results.length / 72) * 100}%` }} />
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Checks done" aria-valuemin={0} aria-valuemax={72} aria-valuenow={audit.results.length}>
+        <div className="bar-fill h-full rounded-full bg-linear-to-r from-brand to-accent" style={{ transform: `scaleX(${audit.results.length / 72})` }} />
       </div>
-      <ol ref={logRef} className="mt-6 max-h-80 overflow-y-auto rounded-2xl border border-line bg-card p-4 font-mono text-xs space-y-1.5">
+      <ol ref={logRef} className="mt-6 max-h-80 space-y-1.5 overflow-y-auto rounded-card border border-line bg-card p-4 font-mono text-xs">
         {audit.progress.map((p, i) => (
           <li key={i} className="flex gap-3">
             <span className="text-ink-soft">{new Date(p.at).toLocaleTimeString("en-GB")}</span>
@@ -79,7 +79,7 @@ function Progress({ audit, onCancel, cancelling, pollError }: { audit: AuditReco
           </li>
         ))}
       </ol>
-      <button onClick={onCancel} disabled={cancelling} className="mt-6 rounded-xl border border-line bg-card px-5 py-2.5 text-sm font-medium hover:border-fail hover:text-fail disabled:opacity-60">
+      <button type="button" onClick={onCancel} disabled={cancelling} aria-busy={cancelling || undefined} className="mt-6 min-h-10 whitespace-nowrap rounded-input border border-muted bg-paper-3 px-5 py-2 text-sm font-semibold hover:border-fail hover:text-fail">
         {cancelling ? "Cancelling…" : "Cancel audit"}
       </button>
     </div>
@@ -91,7 +91,7 @@ function Ended({ audit }: { audit: AuditRecord }) {
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-14">
       <h1 className="text-2xl font-bold tracking-tight">{audit.status === "cancelled" ? "Audit cancelled" : "The audit didn't finish"}</h1>
       <p className="mt-2 text-ink-soft">{audit.error ?? `The audit of ${audit.domain} was stopped before it finished.`}</p>
-      <Link href="/" className="mt-6 inline-block rounded-xl bg-accent px-5 py-2.5 font-semibold text-white">Start a new audit</Link>
+      <Link href="/" className="btn mt-6 inline-flex min-h-10 items-center whitespace-nowrap rounded-input bg-accent px-5 py-2 font-semibold text-accent-ink hover:bg-accent-strong">Start a new audit</Link>
     </div>
   );
 }
@@ -134,99 +134,111 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
 
   const name = audit.input.companyName || audit.domain;
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12 space-y-12">
-      <section aria-labelledby="results-title" className="rounded-3xl border border-line bg-card p-6 sm:p-10">
-        <div className="grid items-center gap-8 md:grid-cols-[auto_1fr] md:gap-12">
+    <div className="mx-auto max-w-5xl space-y-14 px-4 py-8 sm:px-6 sm:py-12">
+      <section aria-labelledby="results-title" className="grid items-start gap-x-12 gap-y-8 md:grid-cols-[auto_minmax(0,1fr)]">
+        <figure className="m-0 justify-self-center md:sticky md:top-24">
           <ScoreGauge score={s.overall} />
-          <div className="space-y-4 text-center md:text-left">
-            <div>
-              <p className="text-sm font-medium text-accent">GEO Visibility Score</p>
-              <h1 id="results-title" className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight break-words">{name}</h1>
-              <p className="mt-1 text-sm text-ink-soft">
-                {audit.domain} · <time dateTime={audit.createdAt}>audited {auditedOn(audit.createdAt)}</time>
-              </p>
+          <figcaption className="mt-1 text-center text-sm text-ink-soft">GEO Visibility Score</figcaption>
+        </figure>
+        <div className="min-w-0 space-y-6">
+          <div>
+            <h1 id="results-title" className="text-3xl sm:text-4xl">{name}</h1>
+            <dl className="mt-4 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-1.5 text-sm">
+              <dt className="text-ink-soft">Website</dt>
+              <dd className="m-0 break-words">{audit.domain}</dd>
+              <dt className="text-ink-soft">Audited</dt>
+              <dd className="m-0">
+                <time dateTime={audit.createdAt}>{auditedOn(audit.createdAt)}</time>
+              </dd>
               <AiCostLine audit={audit} />
-              <AuditActions id={audit.id} favourite={favourite} />
-            </div>
-            <AiReviewWarning audit={audit} />
+            </dl>
+            <AuditActions id={audit.id} favourite={favourite} />
+          </div>
+          <AiReviewWarning audit={audit} />
+          <div className="space-y-3 border-t border-line pt-5">
             <p className="font-mono text-sm" data-testid="score-line">{formatScoreLine(s)}</p>
             {s.notInBuild > 0 && (
               <p className="text-xs text-ink-soft">
                 {s.notInBuild} check{s.notInBuild === 1 ? " isn't" : "s aren't"} available in this version yet, so {s.notInBuild === 1 ? "it isn't" : "they aren't"} counted.
               </p>
             )}
-            {s.band && <p className="text-ink-soft max-w-prose">{BAND_SUMMARY[s.band]}</p>}
-            {s.provisional && (
-              <p role="note" className="rounded-xl bg-partial-soft px-4 py-3 text-sm text-partial text-left">
-                <strong>Provisional score.</strong> Only {s.coveragePct}% of checks could be assessed, so this score may change a lot. Adding API keys and company details fills in the gaps.
-              </p>
-            )}
-            <ul className="flex flex-wrap justify-center md:justify-start gap-2 text-sm" aria-label="Check results">
-              <li className="rounded-full bg-pass-soft px-3 py-1 text-pass">{counts.pass} pass</li>
-              <li className="rounded-full bg-partial-soft px-3 py-1 text-partial">{counts.partial} partial</li>
-              <li className="rounded-full bg-fail-soft px-3 py-1 text-fail">{counts.fail} fail</li>
-              <li className="rounded-full bg-unable-soft px-3 py-1 text-unable">{counts.unable} unable to verify</li>
-            </ul>
+            {s.band && <p className="max-w-prose text-lg">{BAND_SUMMARY[s.band]}</p>}
           </div>
+          {s.provisional && (
+            <p role="note" className="rounded-input bg-partial-soft px-4 py-3 text-sm text-partial">
+              <strong>Provisional score.</strong> Only {s.coveragePct}% of checks could be assessed, so this score may change a lot. Adding API keys and company details fills in the gaps.
+            </p>
+          )}
+          <ul className="flex flex-wrap gap-2 text-sm" aria-label="Check results">
+            <li className="rounded-full bg-pass-soft px-3 py-1 text-pass">{counts.pass} pass</li>
+            <li className="rounded-full bg-partial-soft px-3 py-1 text-partial">{counts.partial} partial</li>
+            <li className="rounded-full bg-fail-soft px-3 py-1 text-fail">{counts.fail} fail</li>
+            <li className="rounded-full bg-unable-soft px-3 py-1 text-unable">{counts.unable} unable to verify</li>
+          </ul>
         </div>
       </section>
 
-      <nav aria-label="Report sections" className="no-print -mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft">
-        <a href="#categories" className="hover:text-accent">Categories</a>
-        <a href="#todo" className="hover:text-accent">To-do list ({todo.length})</a>
-        <a href="#visibility" className="hover:text-accent">AI visibility</a>
-        <a href="#evidence" className="hover:text-accent">Full evidence report</a>
+      <nav aria-label="Report sections" className="no-print flex gap-x-1 overflow-x-auto border-y border-line py-1 text-sm font-semibold text-ink-soft">
+        <a href="#categories" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">Categories</a>
+        <a href="#todo" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">To-do list ({todo.length})</a>
+        <a href="#visibility" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">AI visibility</a>
+        <a href="#evidence" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">Full evidence report</a>
       </nav>
 
       <section id="categories" aria-labelledby="categories-title" className="scroll-mt-20">
-        <SectionHeading id="categories-title" title="Category breakdown" sub="Click a category to see its checks." />
-        <div className="rounded-2xl border border-line bg-card p-2 sm:p-3">
+        <div className="mb-5">
+          <h2 id="categories-title" className="text-2xl">Category breakdown</h2>
+          <p className="mt-2 text-sm text-ink-soft">Click a category to see its checks.</p>
+        </div>
+        <div className="rounded-card border border-line bg-card p-2 sm:p-3">
           <CategoryBars score={s} />
         </div>
       </section>
 
       <section id="todo" aria-labelledby="todo-title" className="scroll-mt-20">
-        <SectionHeading id="todo-title" title="Your to-do list" sub={`${todo.length} fix${todo.length === 1 ? "" : "es"}, most valuable first. “Kwez can fix this” items are ones we can do for you.`} />
+        <div className="mb-5">
+          <h2 id="todo-title" className="text-2xl">Your to-do list</h2>
+          <p className="mt-2 text-sm text-ink-soft">{`${todo.length} fix${todo.length === 1 ? "" : "es"}, most valuable first. “Kwez can fix this” items are ones we can do for you.`}</p>
+        </div>
         <TodoList items={todo} />
       </section>
 
       <section id="visibility" aria-labelledby="visibility-title" className="scroll-mt-20">
-        <SectionHeading id="visibility-title" title="AI visibility" sub="How often AI assistants mention this business when asked questions by people who don't know it." />
+        <div className="mb-5">
+          <h2 id="visibility-title" className="text-2xl">AI visibility</h2>
+          <p className="mt-2 text-sm text-ink-soft">How often AI assistants mention this business when asked questions by people who don&rsquo;t know it.</p>
+        </div>
         <VisibilityPlaceholder audit={audit} />
       </section>
 
       <section id="evidence" aria-labelledby="evidence-title" className="scroll-mt-20">
-        <SectionHeading id="evidence-title" title="Full evidence report" sub="All 72 checks, with the evidence behind each result." />
+        <div className="mb-5">
+          <h2 id="evidence-title" className="text-2xl">Full evidence report</h2>
+          <p className="mt-2 text-sm text-ink-soft">All 72 checks, with the evidence behind each result.</p>
+        </div>
         <EvidenceReport results={audit.results} score={s} />
       </section>
     </div>
   );
 }
 
-function SectionHeading({ id, title, sub }: { id: string; title: string; sub?: string }) {
-  return (
-    <div className="mb-4">
-      <h2 id={id} className="text-2xl font-bold tracking-tight">{title}</h2>
-      {sub && <p className="mt-1 text-sm text-ink-soft">{sub}</p>}
-    </div>
-  );
-}
 
 /** Model, token use and estimated cost of the AI review (estimates from config prices, not invoices). */
 function AiCostLine({ audit }: { audit: AuditRecord }) {
   const ai = audit.extras.aiReview as { model: string; calls: number; tokensUsed: number } | undefined;
-  if (!ai)
-    return audit.extras.webSearch ? (
-      <p className="mt-1 text-xs text-ink-soft">
-        <WebSearchLine audit={audit} />
-      </p>
-    ) : null;
   const usd = audit.costs.filter((c) => c.provider === "anthropic").reduce((t, c) => t + c.usd, 0);
   return (
-    <p className="mt-1 text-xs text-ink-soft" data-testid="ai-cost">
-      AI review: {ai.model}, {ai.calls} request{ai.calls === 1 ? "" : "s"}, {ai.tokensUsed.toLocaleString("en-GB")} tokens, about ${usd.toFixed(2)}
+    <>
+      {ai && (
+        <>
+          <dt className="text-ink-soft">AI review</dt>
+          <dd className="m-0" data-testid="ai-cost">
+            {ai.model}, {ai.calls} request{ai.calls === 1 ? "" : "s"}, {ai.tokensUsed.toLocaleString("en-GB")} tokens, about ${usd.toFixed(2)}
+          </dd>
+        </>
+      )}
       <WebSearchLine audit={audit} />
-    </p>
+    </>
   );
 }
 
@@ -235,8 +247,10 @@ function WebSearchLine({ audit }: { audit: AuditRecord }) {
   if (!w) return null;
   return (
     <>
-      <br />
-      Web search ({w.provider === "serper" ? "Google via Serper" : "Brave"}): {w.searches.length} searches, {w.relevantResults} result{w.relevantResults === 1 ? "" : "s"} about this business on {w.sites.length} site{w.sites.length === 1 ? "" : "s"}
+      <dt className="text-ink-soft">Web search</dt>
+      <dd className="m-0">
+        {w.provider === "serper" ? "Google via Serper" : "Brave"}, {w.searches.length} searches, {w.relevantResults} result{w.relevantResults === 1 ? "" : "s"} about this business on {w.sites.length} site{w.sites.length === 1 ? "" : "s"}
+      </dd>
     </>
   );
 }
@@ -250,7 +264,7 @@ function AiReviewWarning({ audit }: { audit: AuditRecord }) {
   const authProblem = /\b401\b|authentication|invalid bearer|x-api-key|api key/i.test(firstError);
   const credit = /credit balance|billing/i.test(firstError);
   return (
-    <div role="alert" className="rounded-xl border border-fail/30 bg-fail-soft px-4 py-3 text-sm text-left text-fail">
+    <div role="alert" className="rounded-input border border-fail/30 bg-fail-soft px-4 py-3 text-sm text-left text-fail">
       <p>
         <strong>The AI review didn&rsquo;t run, so {affected} checks couldn&rsquo;t be assessed.</strong>{" "}
         {authProblem
@@ -271,7 +285,7 @@ function VisibilityPlaceholder({ audit }: { audit: AuditRecord }) {
   const reason = !audit.input.options.runVisibility
     ? "AI visibility tests were switched off for this audit. Turn them on in the form's options to see whether AI assistants recommend this business."
     : r?.issue || "AI visibility results will appear here.";
-  return <p className="rounded-2xl border border-dashed border-line bg-card p-6 text-sm text-ink-soft">{reason}</p>;
+  return <p className="rounded-card border border-dashed border-line bg-card p-6 text-sm text-ink-soft">{reason}</p>;
 }
 
 function VisibilityResults({ v, name }: { v: VisibilityData; name: string }) {
@@ -279,13 +293,13 @@ function VisibilityResults({ v, name }: { v: VisibilityData; name: string }) {
   const hits = answered.filter((a) => a.mentioned).length;
   const pct = answered.length ? Math.round((hits / answered.length) * 100) : 0;
   return (
-    <div className="rounded-2xl border border-line bg-card">
+    <div className="rounded-card border border-line bg-card">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line px-5 py-4">
         <p className="text-3xl font-bold tabular-nums" style={{ fontFamily: "var(--font-display)" }}>
           {hits}/{answered.length}
         </p>
         <p className="text-sm text-ink-soft">
-          {v.label} named <span className="font-medium text-ink">{name}</span> in {pct}% of answers to {v.promptSource === "supplied" ? "your example questions" : "questions a new customer might ask"} (with web search on).
+          {v.label} named <span className="font-semibold text-ink">{name}</span> in {pct}% of answers to {v.promptSource === "supplied" ? "your example questions" : "questions a new customer might ask"} (with web search on).
         </p>
       </div>
       <ul className="divide-y divide-line">
@@ -295,7 +309,7 @@ function VisibilityResults({ v, name }: { v: VisibilityData; name: string }) {
               {a.error ? "–" : a.mentioned ? "✓" : "✗"}
             </span>
             <span className="min-w-0">
-              <span className="block font-medium">&ldquo;{a.prompt}&rdquo;</span>
+              <span className="block font-semibold">&ldquo;{a.prompt}&rdquo;</span>
               <span className="block text-ink-soft">
                 {a.error
                   ? `Not answered (${a.error}).`

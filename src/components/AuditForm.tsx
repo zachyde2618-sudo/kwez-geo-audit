@@ -168,7 +168,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
   }
 
   return (
-    <form onSubmit={onSubmit} onKeyDown={blockEnterSubmit} noValidate className="space-y-6">
+    <form onSubmit={onSubmit} onKeyDown={blockEnterSubmit} noValidate>
       <Section title="Paste all details" subtitle="Optional. Paste everything at once, for example from a Google Doc, and we'll fill in the boxes below for you to check.">
         <Field
           label="Details with headings"
@@ -189,22 +189,22 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
           )}
         </Field>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={applyPaste} disabled={!pasteText.trim()} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">
+          <button type="button" onClick={applyPaste} disabled={!pasteText.trim()} className="min-h-10 whitespace-nowrap rounded-input border border-accent px-4 py-2 text-sm font-semibold text-accent hover:bg-accent-soft">
             Fill in the form
           </button>
-          <button type="button" onClick={copyTemplate} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent">
+          <button type="button" onClick={copyTemplate} className="rounded-input border border-line px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent">
             {templateCopied ? "Template copied" : "Copy blank template"}
           </button>
           <span className="text-xs text-ink-soft">Nothing is sent anywhere until you press Run GEO audit.</span>
         </div>
         {pasteReport && (
-          <div role="status" className="rounded-xl border border-accent/30 bg-accent-soft/50 p-4 space-y-2 text-sm">
+          <div role="status" className="rounded-input border border-accent/30 bg-accent-soft/50 p-4 space-y-2 text-sm">
             {pasteReport.filled.length ? (
               <p>
-                <span className="font-medium">Filled in:</span> {pasteReport.filled.join(", ")}. Check the boxes below, then press Run GEO audit.
+                <span className="font-semibold">Filled in:</span> {pasteReport.filled.join(", ")}. Check the boxes below, then press Run GEO audit.
               </p>
             ) : (
-              <p className="font-medium">We didn&rsquo;t find any headings we recognise. Try the blank template for the headings to use.</p>
+              <p className="font-semibold">We didn&rsquo;t find any headings we recognise. Try the blank template for the headings to use.</p>
             )}
             {pasteReport.unrecognised.length > 0 && (
               <div>
@@ -226,7 +226,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
           {(p) => <input {...p} className="field-input text-lg" type="text" inputMode="url" autoComplete="url" placeholder="example.co.uk" value={url} onChange={(e) => setUrl(e.target.value)} />}
         </Field>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={prefill} disabled={!url.trim() || prefilling} className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent disabled:opacity-50">
+          <button type="button" onClick={prefill} disabled={!url.trim() || prefilling} className="inline-flex items-center gap-2 rounded-input border border-line px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent disabled:opacity-50">
             {prefilling && <EyeLoader size={18} label={null} halo={false} />}
             {prefilling ? "Reading the website…" : "Fill in details from the website"}
           </button>
@@ -253,7 +253,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
         <Field label="Main products or services" help="Separate with commas. We check your site explains each one clearly." error={errors["services"]}>
           {(p) => <input {...p} className="field-input" placeholder="e.g. rewiring, EV charger installation, EICR certificates" value={services} onChange={(e) => setServices(e.target.value)} />}
         </Field>
-        <Field label="Questions a customer might ask an AI" help="One per line, 3–10 questions. Leave blank and we'll write them for you." error={errors["exampleQuestions"] ?? firstMatching(errors, "exampleQuestions.")}>
+        <Field label="Questions a customer might ask an AI" help="One per line, 3 to 10 questions. Leave blank and we'll write them for you." error={errors["exampleQuestions"] ?? firstMatching(errors, "exampleQuestions.")}>
           {(p) => <textarea {...p} rows={4} className="field-input" placeholder={"Who can install an EV charger in Leeds this week?\nHow much does a full house rewire cost?"} value={questions} onChange={(e) => setQuestions(e.target.value)} />}
         </Field>
       </Section>
@@ -307,7 +307,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
       <Section title="Business identity" subtitle="Optional. Lets us check your details match across the web.">
         <div className="grid sm:grid-cols-2 gap-5">
           <Field label="Companies House number" help="We check your registered name and officers match your site." error={errors["identity.companiesHouseNumber"]}>
-            {(p) => <input {...p} className="field-input font-mono uppercase" placeholder="01234567" value={chNumber} onChange={(e) => setChNumber(e.target.value)} />}
+            {(p) => <input {...p} className="field-input font-mono" placeholder="01234567" value={chNumber} onChange={(e) => setChNumber(e.target.value)} />}
           </Field>
           <Field label="Google Business Profile link" help="Recorded as an identity source. Google doesn't allow us to read it automatically." error={errors["identity.googleBusinessProfileUrl"]}>
             {(p) => <input {...p} className="field-input" inputMode="url" value={gbpUrl} onChange={(e) => setGbpUrl(e.target.value)} />}
@@ -333,23 +333,23 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
             {(p) => <input {...p} className="field-input" type="number" min={1} max={100} disabled={!runVisibility} value={promptCount} onChange={(e) => setPromptCount(e.target.value)} />}
           </Field>
         </div>
-        <label className="flex items-start gap-3 rounded-xl border border-line bg-paper/60 p-4 cursor-pointer">
+        <label className="flex items-start gap-3 rounded-input border border-line bg-paper/60 p-4 cursor-pointer">
           <input type="checkbox" className="mt-1 size-4 accent-accent" checked={runVisibility} onChange={(e) => setRunVisibility(e.target.checked)} />
           <span>
-            <span className="font-medium">Run AI visibility tests</span>
+            <span className="font-semibold">Run AI visibility tests</span>
             <span className="block text-sm text-ink-soft">
-              Asks Claude (with web search) the questions a new customer would ask, and records whether this business is named, who is named instead and which sites are cited. Uses your own example questions if you give at least 3, otherwise writes them. Roughly $0.05–0.10 per question.{" "}
+              Asks Claude (with web search) the questions a new customer would ask, and records whether this business is named, who is named instead and which sites are cited. Uses your own example questions if you give at least 3, otherwise writes them. Roughly $0.05 to $0.10 per question.{" "}
               {keysConfigured.includes("ANTHROPIC_API_KEY") ? "" : "No Anthropic key is configured, so these tests will be marked Unable to Verify."}
             </span>
           </span>
         </label>
       </Section>
 
-      <div className="sticky bottom-0 -mx-4 sm:mx-0 border-t sm:border border-line bg-card/95 backdrop-blur px-4 py-4 sm:rounded-2xl flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div className="sticky bottom-0 -mx-4 flex flex-col justify-between gap-3 border-t border-line bg-paper px-4 py-4 sm:mx-0 sm:flex-row sm:items-center sm:px-0">
         <p role="status" className={`text-sm ${formError ? "text-fail" : "text-ink-soft"}`}>
-          {formError || "72 checks across 9 categories. Most audits take 1–5 minutes."}
+          {formError || "72 checks across 9 categories. Most audits take 1 to 5 minutes."}
         </p>
-        <button type="submit" disabled={submitting} className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/25 hover:bg-accent-strong disabled:opacity-70">
+        <button type="submit" disabled={submitting} aria-busy={submitting || undefined} className="inline-flex min-h-10 items-center justify-center gap-2.5 whitespace-nowrap rounded-input bg-accent px-6 py-2.5 font-semibold text-accent-ink hover:bg-accent-strong">
           {submitting && <EyeLoader size={20} label={null} halo={false} />}
           {submitting ? "Starting…" : "Run GEO audit"}
         </button>
@@ -374,11 +374,11 @@ function PrefillPanel({ s, onUse, onDismiss }: { s: Suggestion; onUse: () => voi
   if (s.industry) rows.push(["Industry", s.industry]);
   if (s.town) rows.push(["Town", s.town]);
   if (s.country) rows.push(["Country", s.country]);
-  for (const p of s.people) rows.push(["Person", [p.fullName, p.jobTitle, p.linkedinUrl].filter(Boolean).join(" · ")]);
+  for (const p of s.people) rows.push(["Person", [p.fullName, p.jobTitle, p.linkedinUrl].filter(Boolean).join(", ")]);
   for (const u of s.socialUrls) rows.push(["Social profile", u]);
   return (
-    <div role="region" aria-label="Details found on the website" className="rounded-xl border border-accent/30 bg-accent-soft/50 p-4 space-y-3">
-      <p className="text-sm font-medium">{rows.length ? "We found these on the website. Check them before using:" : "We couldn't find any details to pre-fill."}</p>
+    <div role="region" aria-label="Details found on the website" className="rounded-input border border-accent/30 bg-accent-soft/50 p-4 space-y-3">
+      <p className="text-sm font-semibold">{rows.length ? "We found these on the website. Check them before using:" : "We couldn't find any details to pre-fill."}</p>
       {rows.length > 0 && (
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
           {rows.map(([k, v], i) => (
@@ -392,11 +392,11 @@ function PrefillPanel({ s, onUse, onDismiss }: { s: Suggestion; onUse: () => voi
       {s.sources.length > 0 && <p className="text-xs text-ink-soft">Sources: {s.sources.join("; ")}.</p>}
       <div className="flex gap-3">
         {rows.length > 0 && (
-          <button type="button" onClick={onUse} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white">
+          <button type="button" onClick={onUse} className="min-h-10 whitespace-nowrap rounded-input border border-accent px-4 py-2 text-sm font-semibold text-accent hover:bg-accent-soft">
             Use these (empty fields only)
           </button>
         )}
-        <button type="button" onClick={onDismiss} className="rounded-lg px-3 py-2 text-sm text-ink-soft hover:text-ink">
+        <button type="button" onClick={onDismiss} className="rounded-input px-3 py-2 text-sm text-ink-soft hover:text-ink">
           Dismiss
         </button>
       </div>
@@ -415,12 +415,12 @@ function firstMatching(errors: Errors, prefix: string): string | undefined {
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-card p-5 sm:p-7 space-y-5">
+    <section className="grid gap-x-10 gap-y-5 border-t border-line py-8 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
       <div>
-        <h2 className="text-lg font-bold tracking-tight">{title}</h2>
-        {subtitle && <p className="text-sm text-ink-soft mt-0.5">{subtitle}</p>}
+        <h2 className="text-xl">{title}</h2>
+        {subtitle && <p className="mt-2 text-sm text-ink-soft">{subtitle}</p>}
       </div>
-      {children}
+      <div className="min-w-0 space-y-5">{children}</div>
     </section>
   );
 }
@@ -431,11 +431,11 @@ function Field({ label, help, error, required, children }: { label: string; help
   const id = useId();
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className="block text-sm font-semibold">
         {label} {required && <span className="text-accent">*</span>}
       </label>
       {children({ id, "aria-invalid": !!error, "aria-describedby": `${id}-help` })}
-      <p id={`${id}-help`} className={`text-xs ${error ? "text-fail" : "text-ink-soft"}`}>
+      <p id={`${id}-help`} className={`min-h-[1lh] max-w-[65ch] text-xs ${error ? "text-fail" : "text-ink-soft"}`}>
         {error ?? help}
       </p>
     </div>
@@ -446,15 +446,15 @@ function Repeater<T>({ items, max, addLabel, onAdd, onRemove, render }: { items:
   return (
     <div className="space-y-4">
       {items.map((item, i) => (
-        <div key={i} className="relative rounded-xl border border-line p-4 pt-8">
-          <button type="button" onClick={() => onRemove(i)} className="absolute right-3 top-2 text-xs text-ink-soft hover:text-fail">
+        <div key={i} className="relative rounded-input border border-line bg-paper-3 p-4 pt-10">
+          <button type="button" onClick={() => onRemove(i)} className="absolute right-2 top-2 rounded-md px-2 py-1.5 text-sm text-ink-soft hover:bg-fail-soft hover:text-fail">
             Remove
           </button>
           {render(item, i)}
         </div>
       ))}
       {items.length < max && (
-        <button type="button" onClick={onAdd} className="rounded-lg border border-dashed border-line px-4 py-2 text-sm text-ink-soft hover:border-accent hover:text-accent">
+        <button type="button" onClick={onAdd} className="min-h-10 whitespace-nowrap rounded-input border border-dashed border-muted px-4 py-2 text-sm font-semibold text-ink-soft hover:border-accent hover:text-accent">
           + {addLabel}
         </button>
       )}

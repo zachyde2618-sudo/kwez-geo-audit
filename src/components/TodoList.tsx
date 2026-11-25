@@ -6,7 +6,7 @@ const GROUPS: TodoGroup[] = ["week", "month", "bigger"];
 export function TodoList({ items }: { items: TodoItem[] }) {
   if (!items.length) {
     return (
-      <p className="rounded-2xl border border-line bg-card p-6 text-ink-soft">
+      <p className="rounded-card border border-line bg-card p-6 text-ink-soft">
         Nothing to fix among the checks we could assess. Checks marked Unable to Verify are listed in the full report below.
       </p>
     );
@@ -40,7 +40,7 @@ export function TodoList({ items }: { items: TodoItem[] }) {
 
 function TodoCard({ item, n }: { item: TodoItem; n: number }) {
   return (
-    <li className="rounded-2xl border border-line bg-card p-4 sm:p-5 break-inside-avoid">
+    <li className="rounded-card border border-line bg-card p-4 sm:p-5 break-inside-avoid">
       <div className="flex gap-4">
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-paper font-mono text-sm text-ink-soft" aria-hidden="true">
           {n}
@@ -49,23 +49,23 @@ function TodoCard({ item, n }: { item: TodoItem; n: number }) {
           <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
             <h4 className="font-semibold leading-snug">{item.title}</h4>
             <div className="flex flex-wrap gap-1.5 text-xs">
-              <span className={`rounded-full px-2.5 py-0.5 font-medium ${item.tag === "Kwez can fix this" ? "bg-accent-soft text-accent" : "bg-paper text-ink"}`}>{item.tag}</span>
-              {item.status === "partial" && <span className="rounded-full bg-partial-soft px-2.5 py-0.5 font-medium text-partial">Partly done</span>}
+              <span className={`rounded-full px-2.5 py-0.5 font-semibold ${item.tag === "Kwez can fix this" ? "bg-accent-soft text-accent" : "bg-paper text-ink"}`}>{item.tag}</span>
+              {item.status === "partial" && <span className="rounded-full bg-partial-soft px-2.5 py-0.5 font-semibold text-partial">Partly done</span>}
               <span className="rounded-full bg-paper px-2.5 py-0.5 text-ink-soft">{item.impact} impact</span>
             </div>
           </div>
           <p className="text-sm text-ink-soft">{item.why}</p>
           <p className="text-sm">
-            <span className="font-medium">What to do: </span>
+            <span className="font-semibold">What to do: </span>
             {item.change}
           </p>
           {item.pages.length > 0 && (
             <p className="text-xs text-ink-soft">
-              <span className="font-medium text-ink">Pages: </span>
+              <span className="font-semibold text-ink">Pages: </span>
               {item.pages.slice(0, 5).map((p, i) => (
                 <span key={p}>
                   {i > 0 && ", "}
-                  <a href={p} target="_blank" rel="noopener noreferrer" className="underline decoration-line underline-offset-2 hover:text-accent break-all">
+                  <a href={p} target="_blank" rel="noopener noreferrer" title={p} className="inline-block max-w-full truncate whitespace-nowrap align-bottom underline decoration-line underline-offset-2 hover:text-accent sm:max-w-[28rem]">
                     {relPathOrUrl(p)}
                   </a>
                 </span>
@@ -74,12 +74,12 @@ function TodoCard({ item, n }: { item: TodoItem; n: number }) {
             </p>
           )}
           {item.explain.map((e) => (
-            <p key={e.term} className="rounded-lg bg-paper px-3 py-2 text-xs">
-              <span className="font-medium">{e.question.replace("'", "\u2019")} </span>
+            <p key={e.term} className="rounded-input bg-paper px-3 py-2 text-xs">
+              <span className="font-semibold">{e.question.replace("'", "\u2019")} </span>
               {e.definition.charAt(0).toUpperCase() + e.definition.slice(1)}
             </p>
           ))}
-          <p className="text-[11px] text-ink-soft">
+          <p className="text-xs text-ink-soft">
             <a href={`#check-${item.checkId}`} className="hover:text-accent">Check {item.checkId} in the full report</a>
           </p>
         </div>

@@ -41,7 +41,7 @@ export function AuditActions({ id, favourite: initialFavourite }: { id: string; 
         onClick={toggle}
         disabled={!ready}
         aria-pressed={favourite}
-        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium ${favourite ? "border-brand/40 bg-accent-soft text-accent-strong" : "border-line text-ink-soft hover:border-accent hover:text-accent"}`}
+        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold ${favourite ? "border-brand/40 bg-accent-soft text-accent-strong" : "border-line text-ink-soft hover:border-accent hover:text-accent"}`}
       >
         <span aria-hidden className={favourite ? "text-brand" : ""}>{favourite ? "★" : "☆"}</span>
         {favourite ? "Favourite" : "Add to favourites"}
@@ -50,7 +50,7 @@ export function AuditActions({ id, favourite: initialFavourite }: { id: string; 
         onClick={rerun}
         disabled={!ready || starting}
         title="Start a new audit with the same details; this one is kept"
-        className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:border-accent hover:text-accent disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-ink-soft hover:border-accent hover:text-accent disabled:opacity-60"
       >
         {starting ? <EyeLoader size={16} label={null} halo={false} /> : <span aria-hidden>↻</span>}
         {starting ? "Starting…" : "Run again"}

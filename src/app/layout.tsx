@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Bitter, Geist, Geist_Mono } from "next/font/google";
 import { BrandLogo, EyeMark } from "@/components/Brand";
+import { NavLinks } from "@/components/NavLinks";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -17,24 +17,30 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-GB" className={`${geistSans.variable} ${geistMono.variable} ${bitter.variable} h-full antialiased`}>
+    <html lang="en-GB" className={`${geistSans.variable} ${geistMono.variable} ${bitter.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Marks that scripts run, so motion that starts hidden (the score dial) is only hidden when it can be shown again. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
       <body className="min-h-full flex flex-col">
-        <header className="no-print border-b border-line bg-paper/80 backdrop-blur sticky top-0 z-20">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 h-16 flex items-center justify-between">
+        <a href="#main" className="visually-hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-paper">
+          Skip to content
+        </a>
+        <header className="no-print sticky top-0 z-20 border-b border-line bg-paper">
+          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
             <BrandLogo />
-            <nav className="flex gap-1 text-sm font-medium text-ink-soft">
-              <Link href="/" className="rounded-full px-3 py-1.5 hover:bg-accent-soft hover:text-accent-strong">New audit</Link>
-              <Link href="/audits" className="rounded-full px-3 py-1.5 hover:bg-accent-soft hover:text-accent-strong">Past audits</Link>
-            </nav>
+            <NavLinks />
           </div>
         </header>
-        <main className="flex-1">{children}</main>
-        <footer className="no-print border-t border-line text-xs text-ink-soft">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 flex items-center gap-3">
-            <EyeMark size={22} />
-            <span>
-              <span className="font-semibold text-ink">Kwez</span> GEO Audit · Generative Engine Optimisation for UK businesses
-            </span>
+        <main id="main" className="flex-1">{children}</main>
+        <footer className="no-print border-t border-line text-sm text-ink-soft">
+          <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-6 sm:px-6">
+            <EyeMark size={24} />
+            <p className="leading-snug">
+              <span className="font-semibold text-ink">Kwez</span> GEO Audit
+              <br />
+              Generative Engine Optimisation for UK businesses
+            </p>
           </div>
         </footer>
       </body>

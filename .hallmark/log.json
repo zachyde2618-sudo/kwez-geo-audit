@@ -1,0 +1,32 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "app",
+  "shape": "app screen",
+  "theme": "brand",
+  "axes": "light/slab-serif/warm",
+  "nav": "top bar, eye logo with hover wordmark, current page marked",
+  "footer": "eye, name and line",
+  "signature": "the score dial beside the business it scores",
+  "sections": [
+   "form in a label column",
+   "running audit with log",
+   "report header: dial, fact list, counts",
+   "category bars",
+   "to-do list",
+   "AI visibility",
+   "evidence report",
+   "past audits list"
+  ],
+  "imagery": "product (no photos)",
+  "photos": [],
+  "waived": [
+   "65",
+   "39b",
+   "72"
+  ],
+  "prompt": "GEO audit tool for an agency auditing small business websites",
+  "date": "2026-11-25"
+ }
+]

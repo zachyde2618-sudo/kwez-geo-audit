@@ -1,0 +1,91 @@
+@theme static {
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.2rem;
+  --text-xl: 1.44rem;
+  --text-2xl: 1.728rem;
+  --text-3xl: 2.074rem;
+  --text-display-s: 1.44rem;
+  --text-display: 1.728rem;
+  --text-section: 1.2rem;
+  --text-title: 1rem;
+  --text-lead: 1rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --color-error: oklch(52% 0.19 27);
+  --color-success: oklch(50% 0.12 150);
+  --color-paper: oklch(97.5% 0.009 78);
+  --color-paper-2: oklch(94.6% 0.013 75);
+  --color-paper-3: oklch(99.3% 0.004 78);
+  --color-ink: oklch(21.6% 0.007 67);
+  --color-ink-2: oklch(34% 0.012 64);
+  --color-muted: oklch(50.2% 0.017 64);
+  --color-rule: oklch(91.7% 0.018 73);
+  --color-accent: oklch(55% 0.129 46);
+  --color-accent-ink: oklch(98.5% 0.006 78);
+  --color-focus: oklch(56% 0.19 46);
+  --font-display: var(--font-bitter), "Bitter", Georgia, ui-serif, serif;
+  --font-body: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-outlier: var(--font-body);
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --shadow-card: none;
+  --tracking-display: -0.02em;
+  /* Kwez brand, kept from the project: the logo's terracotta for decoration, its deeper step for text and controls */
+  --color-brand: oklch(64.4% 0.129 47);
+  --color-accent-strong: oklch(47.8% 0.112 45);
+  --color-accent-soft: oklch(95.7% 0.019 57);
+  --color-card: var(--color-paper-3);
+  --color-line: var(--color-rule);
+  --color-ink-soft: var(--color-muted);
+  /* Check results: four states, each a text colour and a quiet fill */
+  --color-pass: oklch(51.3% 0.118 154);
+  --color-pass-soft: oklch(94.9% 0.021 159);
+  --color-partial: oklch(52.2% 0.108 80);
+  --color-partial-soft: oklch(95.9% 0.037 90);
+  --color-fail: oklch(53.6% 0.18 28);
+  --color-fail-soft: oklch(93.9% 0.024 24);
+  --color-unable: oklch(52.8% 0.012 292);
+  --color-unable-soft: oklch(94% 0.004 91);
+  /* Overlays and marks, as tokens so nothing past this block is a literal */
+  --color-halo: oklch(64.4% 0.129 47 / 0.45);
+  --color-halo-0: oklch(64.4% 0.129 47 / 0);
+  --color-hatch: oklch(21.6% 0.007 67 / 0.06);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --radius-input: 10px;
+}
+:root {
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+  --space-4xl: 144px;
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  --container: 1440px;
+  --gutter: 64px;
+  --gap-columns: 32px;
+  --section-gap-s: 120px;
+  --section-gap: 144px;
+  --section-gap-l: 176px;
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-sticky-nav: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  --rule-hair: 1px;
+}
+@media (max-width: 60rem) { :root { --gutter: 24px; --section-gap-s: 80px; --section-gap: 96px; --section-gap-l: 120px; } }
+@media (max-width: 40rem) { :root { --gutter: 16px; --section-gap-s: 56px; --section-gap: 72px; --section-gap-l: 96px; --gap-columns: 16px; } }

@@ -27,12 +27,8 @@ export function BrandLogo() {
       <EyeMark size={38} className="brand-logo-eye" />
       <span className="brand-logo-reveal" aria-hidden>
         <span className="flex flex-col justify-center pl-3 pr-1">
-          <span className="brand-kwez h-[22px]" />
-          <span className="mt-1 whitespace-nowrap text-[8.5px] font-semibold uppercase leading-[1.15] tracking-[0.2em] text-ink">
-            Generative Engine
-            <br />
-            Optimisation
-          </span>
+          <span className="brand-kwez h-[24px]" />
+          <span className="mt-1 whitespace-nowrap text-xs leading-tight text-ink">Generative Engine Optimisation</span>
         </span>
       </span>
     </Link>

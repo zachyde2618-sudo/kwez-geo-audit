@@ -14,14 +14,19 @@ export function EvidenceReport({ results, score }: { results: CheckResult[]; sco
         const cs = score?.categories.find((c) => c.categoryId === cat.id);
         let lastGroup: string | undefined;
         return (
-          <details key={cat.id} id={`category-${cat.id}`} className="group rounded-2xl border border-line bg-card scroll-mt-20">
+          <details key={cat.id} id={`category-${cat.id}`} className="group rounded-card border border-line bg-card scroll-mt-20">
             <summary className="flex cursor-pointer items-center gap-4 p-4 sm:p-5">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-sm font-semibold text-accent">{cat.id}</span>
+              <span className="grid size-8 shrink-0 place-items-center rounded-input bg-accent-soft text-sm font-semibold text-accent">{cat.id}</span>
               <span className="flex-1 min-w-0">
                 <span className="block font-semibold leading-snug">{cat.name}</span>
-                <span className="block text-xs text-ink-soft mt-0.5">
-                  {catResults.length} checks · weight {cat.weight}
-                  {cs && ` · ${cs.counts.pass} pass, ${cs.counts.partial} partial, ${cs.counts.fail} fail, ${cs.counts.unable} unable to verify`}
+                <span className="mt-0.5 block text-xs text-ink-soft">
+                  {catResults.length} checks, weight {cat.weight}
+                  {cs && (
+                    <>
+                      <br />
+                      {cs.counts.pass} pass, {cs.counts.partial} partial, {cs.counts.fail} fail, {cs.counts.unable} unable to verify
+                    </>
+                  )}
                 </span>
               </span>
               <ScoreGauge mini score={cs?.score == null ? null : Math.round(cs.score)} label={`${cat.name} score`} />
@@ -34,7 +39,7 @@ export function EvidenceReport({ results, score }: { results: CheckResult[]; sco
                 lastGroup = meta.group;
                 return (
                   <li key={r.id}>
-                    {header && <div className="bg-paper px-5 py-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">{header}</div>}
+                    {header && <p className="bg-paper-2 px-5 py-2 text-sm font-semibold text-ink-soft">{header}</p>}
                     <CheckRow result={r} />
                   </li>
                 );
@@ -51,7 +56,7 @@ function CheckRow({ result: r }: { result: CheckResult }) {
   const meta = CHECK_BY_ID.get(r.id)!;
   return (
     <details className="group/check scroll-mt-24" id={`check-${r.id}`}>
-      <summary className="flex cursor-pointer items-start gap-3 px-4 sm:px-5 py-3.5 hover:bg-paper/60">
+      <summary className="flex cursor-pointer items-start gap-3 px-4 py-3.5 hover:bg-paper-2 sm:px-5">
         <span className="w-9 shrink-0 pt-0.5 font-mono text-xs text-ink-soft">{r.id}</span>
         <span className="flex-1 min-w-0 text-sm leading-snug">
           {meta.title}
@@ -67,10 +72,10 @@ function CheckRow({ result: r }: { result: CheckResult }) {
           <div><dt className="inline">Effort: </dt><dd className="inline text-ink">{r.effort}</dd></div>
         </dl>
         {r.requiredChange && (
-          <p><span className="font-medium">{r.status === "unable" ? "Recommendation: " : "What to change: "}</span>{r.requiredChange}</p>
+          <p><span className="font-semibold">{r.status === "unable" ? "Recommendation: " : "What to change: "}</span>{r.requiredChange}</p>
         )}
         {r.notes.map((n, i) => (
-          <p key={i} className="rounded-lg bg-accent-soft/60 px-3 py-2 text-xs">{n}</p>
+          <p key={i} className="rounded-input bg-accent-soft/60 px-3 py-2 text-xs">{n}</p>
         ))}
         <EvidenceList evidence={r.evidence} />
       </div>
@@ -82,14 +87,14 @@ function EvidenceList({ evidence }: { evidence: Evidence[] }) {
   if (!evidence.length) return <p className="text-xs text-ink-soft italic">No evidence collected.</p>;
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft mb-1.5">Evidence</p>
-      <ul className="space-y-1.5">
+      <p className="mb-1.5 text-sm font-semibold">Evidence</p>
+      <ul className="divide-y divide-line border-l-2 border-line">
         {evidence.map((e, i) => (
-          <li key={i} className="rounded-lg border border-line px-3 py-2 text-xs">
-            <span className="font-medium">{e.label}: </span>
+          <li key={i} className="min-w-0 py-2 pl-3 text-xs">
+            <span className="font-semibold break-words">{e.label}: </span>
             {e.kind === "snippet" ? <q className="italic">{e.value}</q> : <span className="font-mono break-all">{e.value}</span>}
             {e.url && (
-              <a href={e.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-accent underline break-all">{e.url}</a>
+              <a href={e.url} target="_blank" rel="noopener noreferrer" title={e.url} className="ml-1 inline-block max-w-full truncate whitespace-nowrap align-bottom text-accent underline sm:max-w-[32rem]">{e.url}</a>
             )}
             {e.verification && (
               <span className={`ml-2 inline-block rounded px-1.5 py-0.5 ${e.verification === "verified_externally" ? "bg-pass-soft text-pass" : "bg-unable-soft text-unable"}`}>
