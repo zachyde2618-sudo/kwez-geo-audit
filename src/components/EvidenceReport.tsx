@@ -14,7 +14,7 @@ export function EvidenceReport({ results, score }: { results: CheckResult[]; sco
         const cs = score?.categories.find((c) => c.categoryId === cat.id);
         let lastGroup: string | undefined;
         return (
-          <details key={cat.id} id={`category-${cat.id}`} className="group rounded-card border border-line bg-card scroll-mt-20">
+          <details key={cat.id} id={`category-${cat.id}`} className="group rounded-card border border-line bg-card scroll-mt-4">
             <summary className="flex cursor-pointer items-center gap-4 p-4 sm:p-5">
               <span className="grid size-8 shrink-0 place-items-center rounded-input bg-accent-soft text-sm font-semibold text-accent">{cat.id}</span>
               <span className="flex-1 min-w-0">

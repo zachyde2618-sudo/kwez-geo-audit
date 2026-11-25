@@ -6,6 +6,8 @@ A web app that audits how visible a small business's website is to AI assistants
 
 Detailed design decisions and how the AI review works: **`BUILD_NOTES.md`** (read it before changing checks, scoring or the AI stages).
 
+Visual design rules: **`DESIGN.md`** (read it before changing any UI; values live in `src/app/tokens.css`, references in `docs/design-references/`).
+
 ## Working with the owner
 
 - The owner is not a developer. Explain in plain English, give **one command per code block**, say which terminal to run it in, and never tell them to paste keys into chat.
@@ -36,7 +38,7 @@ Detailed design decisions and how the AI review works: **`BUILD_NOTES.md`** (rea
 4. **AI visibility** (`src/lib/visibility/run.ts`, on by default, 10 questions): Claude with web search (`web_search_20260209`, told to search first) answers questions a new customer would ask (never naming the business); a second pass records who was named. With dynamic filtering there are no citations, so the search results are the sources.
 5. **Checks** (`src/lib/checks/catN.ts`, metadata in `catalogue.ts`, rules in `registry.ts`'s `finaliseResult`), then **scoring** (`src/lib/scoring.ts`): code computes the score, never the model. Checks with no implementation are left out of coverage (`notInBuild`).
 
-Other parts: past audits with favourites/delete/run again (`src/lib/storage.ts`, `src/components/PastAudits.tsx`; favourites in `data/audits/_favourites.json`), paste-box parser (`src/lib/paste.ts`), branding (`src/components/Brand.tsx`, tokens in `globals.css`).
+Other parts: past audits with favourites/delete/run again (`src/lib/storage.ts`, `src/components/PastAudits.tsx`; favourites in `data/audits/_favourites.json`), paste-box parser (`src/lib/paste.ts`), branding (`src/components/Brand.tsx`, tokens in `src/app/tokens.css`, rules in `DESIGN.md`).
 
 ## Rules to keep
 

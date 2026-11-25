@@ -156,7 +156,7 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
           </div>
           <AiReviewWarning audit={audit} />
           <div className="space-y-3 border-t border-line pt-5">
-            <p className="font-mono text-sm" data-testid="score-line">{formatScoreLine(s)}</p>
+            <p className="text-sm font-semibold tabular-nums text-ink-2" data-testid="score-line">{formatScoreLine(s)}</p>
             {s.notInBuild > 0 && (
               <p className="text-xs text-ink-soft">
                 {s.notInBuild} check{s.notInBuild === 1 ? " isn't" : "s aren't"} available in this version yet, so {s.notInBuild === 1 ? "it isn't" : "they aren't"} counted.
@@ -178,14 +178,9 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
         </div>
       </section>
 
-      <nav aria-label="Report sections" className="no-print flex gap-x-1 overflow-x-auto border-y border-line py-1 text-sm font-semibold text-ink-soft">
-        <a href="#categories" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">Categories</a>
-        <a href="#todo" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">To-do list ({todo.length})</a>
-        <a href="#visibility" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">AI visibility</a>
-        <a href="#evidence" className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-paper-2 hover:text-ink">Full evidence report</a>
-      </nav>
+      <SectionNav todoCount={todo.length} />
 
-      <section id="categories" aria-labelledby="categories-title" className="scroll-mt-20">
+      <section id="categories" aria-labelledby="categories-title" className="scroll-mt-4">
         <div className="mb-5">
           <h2 id="categories-title" className="text-2xl">Category breakdown</h2>
           <p className="mt-2 text-sm text-ink-soft">Click a category to see its checks.</p>
@@ -195,7 +190,7 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
         </div>
       </section>
 
-      <section id="todo" aria-labelledby="todo-title" className="scroll-mt-20">
+      <section id="todo" aria-labelledby="todo-title" className="scroll-mt-4">
         <div className="mb-5">
           <h2 id="todo-title" className="text-2xl">Your to-do list</h2>
           <p className="mt-2 text-sm text-ink-soft">{`${todo.length} fix${todo.length === 1 ? "" : "es"}, most valuable first. “Kwez can fix this” items are ones we can do for you.`}</p>
@@ -203,7 +198,7 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
         <TodoList items={todo} />
       </section>
 
-      <section id="visibility" aria-labelledby="visibility-title" className="scroll-mt-20">
+      <section id="visibility" aria-labelledby="visibility-title" className="scroll-mt-4">
         <div className="mb-5">
           <h2 id="visibility-title" className="text-2xl">AI visibility</h2>
           <p className="mt-2 text-sm text-ink-soft">How often AI assistants mention this business when asked questions by people who don&rsquo;t know it.</p>
@@ -211,7 +206,7 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
         <VisibilityPlaceholder audit={audit} />
       </section>
 
-      <section id="evidence" aria-labelledby="evidence-title" className="scroll-mt-20">
+      <section id="evidence" aria-labelledby="evidence-title" className="scroll-mt-4">
         <div className="mb-5">
           <h2 id="evidence-title" className="text-2xl">Full evidence report</h2>
           <p className="mt-2 text-sm text-ink-soft">All 72 checks, with the evidence behind each result.</p>
@@ -323,5 +318,49 @@ function VisibilityResults({ v, name }: { v: VisibilityData; name: string }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+const SECTIONS = [
+  ["categories", "Categories"],
+  ["todo", "To-do list"],
+  ["visibility", "AI visibility"],
+  ["evidence", "Full evidence report"],
+] as const;
+
+/** The report's section bar: sticks under the header and marks the section being read. */
+function SectionNav({ todoCount }: { todoCount: number }) {
+  const [current, setCurrent] = useState<string | null>(null);
+  useEffect(() => {
+    const onScroll = () => {
+      // The section whose top has passed a line just under the sticky bars is the one being read.
+      const line = 160;
+      let found: string | null = null;
+      for (const [id] of SECTIONS) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= line) found = id;
+      }
+      setCurrent(found);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <nav aria-label="Report sections" className="no-print sticky top-16 z-10 border-y border-line bg-paper">
+      <div className="flex gap-x-1 overflow-x-auto py-1.5 text-sm font-semibold text-ink-soft">
+        {SECTIONS.map(([id, label]) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            aria-current={current === id ? "location" : undefined}
+            className={`whitespace-nowrap rounded-full px-3 py-2 ${current === id ? "bg-accent-soft text-accent-strong" : "hover:bg-paper-2 hover:text-ink"}`}
+          >
+            {label}
+            {id === "todo" && <span className="tabular-nums"> ({todoCount})</span>}
+          </a>
+        ))}
+      </div>
+    </nav>
   );
 }

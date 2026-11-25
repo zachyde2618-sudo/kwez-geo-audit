@@ -42,7 +42,7 @@ function TodoCard({ item, n }: { item: TodoItem; n: number }) {
   return (
     <li className="rounded-card border border-line bg-card p-4 sm:p-5 break-inside-avoid">
       <div className="flex gap-4">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-paper font-mono text-sm text-ink-soft" aria-hidden="true">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-paper text-sm font-semibold tabular-nums text-ink-soft" aria-hidden="true">
           {n}
         </span>
         <div className="min-w-0 flex-1 space-y-2">
@@ -73,12 +73,16 @@ function TodoCard({ item, n }: { item: TodoItem; n: number }) {
               {item.pages.length > 5 && ` and ${item.pages.length - 5} more`}
             </p>
           )}
-          {item.explain.map((e) => (
-            <p key={e.term} className="rounded-input bg-paper px-3 py-2 text-xs">
-              <span className="font-semibold">{e.question.replace("'", "\u2019")} </span>
-              {e.definition.charAt(0).toUpperCase() + e.definition.slice(1)}
-            </p>
-          ))}
+          {item.explain.length > 0 && (
+            <dl className="space-y-1.5 border-l-2 border-accent-soft pl-3 text-xs">
+              {item.explain.map((e) => (
+                <div key={e.term}>
+                  <dt className="inline font-semibold">{e.question.replace("'", "\u2019")} </dt>
+                  <dd className="m-0 inline text-ink-2">{e.definition.charAt(0).toUpperCase() + e.definition.slice(1)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           <p className="text-xs text-ink-soft">
             <a href={`#check-${item.checkId}`} className="hover:text-accent">Check {item.checkId} in the full report</a>
           </p>

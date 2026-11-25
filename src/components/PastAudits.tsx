@@ -6,6 +6,7 @@ import { useState } from "react";
 import { auditedOn } from "@/lib/format";
 import type { AuditSummary } from "@/lib/schemas/audit";
 import { EyeLoader } from "./Brand";
+import { ScoreGauge } from "./ScoreGauge";
 import { useHydrated } from "./useHydrated";
 
 
@@ -107,9 +108,13 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
                     <time dateTime={a.createdAt}>Audited {auditedOn(a.createdAt)}</time>
                   </span>
                 </span>
-                <span className="shrink-0 text-right">
-                  <span className="block font-mono text-lg tabular-nums">{a.overall ?? "—"}</span>
-                  <span className="block text-xs text-ink-soft">{a.status === "complete" ? `${a.coveragePct}% coverage` : STATUS[a.status] ?? a.status}</span>
+                <span className="flex shrink-0 items-center gap-3 text-right">
+                  <span className="hidden text-xs text-ink-soft sm:block">{a.status === "complete" ? `${a.coveragePct}% of checks assessed` : STATUS[a.status] ?? a.status}</span>
+                  {a.status === "complete" ? (
+                    <ScoreGauge score={a.overall ?? null} mini label={`Score for ${a.companyName || a.domain}`} />
+                  ) : (
+                    <span className="text-xs text-ink-soft sm:hidden">{STATUS[a.status] ?? a.status}</span>
+                  )}
                 </span>
               </Link>
               {confirming === a.id ? (

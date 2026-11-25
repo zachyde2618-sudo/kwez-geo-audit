@@ -47,7 +47,7 @@ export function CategoryBars({ score }: { score: ScoreSummary }) {
                   />
                 )}
               </span>
-              <span className="text-right font-mono text-base tabular-nums">{value ?? <span className="text-ink-soft text-xs font-sans">n/a</span>}</span>
+              <span className="text-right text-base font-semibold tabular-nums">{value ?? <span className="text-ink-soft text-xs font-sans">n/a</span>}</span>
             </button>
           </li>
         );
