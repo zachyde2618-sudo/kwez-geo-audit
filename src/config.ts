@@ -184,6 +184,11 @@ export const config = {
       return Number.isFinite(n) && n >= 10_000 ? Math.floor(n) : 1_000_000;
     },
     maxRetriesOnInvalidOutput: 2,
+    /**
+     * Shares of the token budget held back during the page review for the later AI stages, so a
+     * big site's pages can't use it all and leave category 9 unassessed.
+     */
+    reserveShare: { externalReview: 0.1, visibility: 0.3 },
     /** Page text is sent in chunks of at most this many characters (~4 chars per token). */
     chunkChars: 48_000,
     /** Parallel requests during the AI review stage. */

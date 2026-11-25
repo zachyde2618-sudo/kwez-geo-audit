@@ -138,6 +138,13 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
         })
       : undefined;
 
+    // Hold back part of the token budget for the later AI stages (web search judgements and
+    // the visibility tests), released stage by stage.
+    const R = config.llm.reserveShare;
+    const willSearch = hasKey("SEARCH_API_KEY");
+    const willAsk = record.input.options.runVisibility;
+    client?.reserveShare((willSearch ? R.externalReview : 0) + (willAsk ? R.visibility : 0));
+
     // Stage 3: AI review of page text (LLM-judged checks). Skipped without a key or pages.
     if (client && ctx.data.crawl?.pages.length) {
       signal.throwIfAborted();
@@ -152,8 +159,10 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
         progress(`AI review failed: ${ctx.data.llmError}`);
       }
     }
+    client?.reserveShare(willAsk ? R.visibility : 0);
+
     // Stage 4: web search for third-party evidence (category 9, 6.2). Skipped without a search key.
-    if (hasKey("SEARCH_API_KEY")) {
+    if (willSearch) {
       signal.throwIfAborted();
       const ext: ExternalData = {};
       try {
@@ -182,6 +191,8 @@ export async function executeAudit(record: AuditRecord, signal: AbortSignal): Pr
       ctx.data.external = ext;
       void persist();
     }
+
+    client?.reserveShare(0);
 
     // Stage 5: AI visibility tests: ask Claude customers' questions (9.10–9.13).
     if (record.input.options.runVisibility && client) {

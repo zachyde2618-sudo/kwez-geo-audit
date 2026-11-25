@@ -17,6 +17,22 @@ const MAX_SITEMAP_URLS = 1000;
 const SKIP_PATH = /\/(cart|basket|checkout|account|my-account|login|log-in|sign-in|signin|register|sign-up|wishlist|compare|search)(\/|$)/i;
 /** Query strings that only re-sort or re-filter the same page, or pick a product variant. */
 const SKIP_QUERY = /[?&](variant|sort_by|sort|orderby|filter\.[^=]*|q|add-to-cart|currency|ref|utm_[a-z]+)=/i;
+/**
+ * The business's own help/FAQ/docs subdomains (support.example.com, help.example.co.uk…).
+ * Many companies keep their FAQs there rather than on the main site, so these are crawled as
+ * part of the site (each with its own robots.txt). Other subdomains (app., dashboard.) are not.
+ */
+export const HELP_SUBDOMAIN = /^(help|support|faqs?|docs|kb|knowledge|knowledgebase|helpcentre|helpcenter|help-centre|help-center|customer-?service)\./i;
+/** Help-centre subdomains whose pages count as FAQ pages (docs. sites are reference material). */
+const FAQ_SUBDOMAIN = /^(help|support|faqs?|kb|knowledge|knowledgebase|helpcentre|helpcenter|help-centre|help-center|customer-?service)\./i;
+
+/** Is `host` one of the business's help/FAQ/docs subdomains of a main site host? */
+export function isHelpSubdomain(host: string, mainHosts: Iterable<string>): boolean {
+  const h = hostKey(host);
+  if (!HELP_SUBDOMAIN.test(h)) return false;
+  for (const m of mainHosts) if (h !== m && h.endsWith(`.${m}`)) return true;
+  return false;
+}
 
 /**
  * How the crawl budget is shared between kinds of page (see planNext):
@@ -126,7 +142,6 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
   const robotsRes = await politeFetch(robotsUrl, { signal, accept: "text/plain,*/*;q=0.5" });
   const robotsBody = robotsRes.status >= 200 && robotsRes.status < 300 ? bodyText(robotsRes).slice(0, 500_000) : "";
   const robots = robotsFromStatus(robotsRes.status, robotsBody);
-  const allowedForUs = (u: string) => isAllowed(robots, OUR_UA_TOKEN, pathOf(u)).allowed;
 
   // ── sitemap(s) ──
   progress("Reading sitemap.xml…");
@@ -161,15 +176,50 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
   const queue = new Map<string, Queued>();
   const picked: Partial<Record<PageRole, number>> = {};
 
-  const isInternal = (u: string) => hosts.has(hostKey(new URL(u).hostname));
+  const helpHosts = new Set<string>();
+  const isInternal = (u: string) => {
+    const h = hostKey(new URL(u).hostname);
+    if (hosts.has(h)) return true;
+    if (!isHelpSubdomain(h, hosts)) return false;
+    helpHosts.add(h);
+    return true;
+  };
+  // robots.txt for each help subdomain, fetched the first time one of its pages is due.
+  const helpRobots = new Map<string, Promise<ReturnType<typeof robotsFromStatus>>>();
+  const robotsFor = (u: string) => {
+    const url = new URL(u);
+    const h = hostKey(url.hostname);
+    if (hosts.has(h)) return Promise.resolve(robots);
+    let r = helpRobots.get(h);
+    if (!r) {
+      r = politeFetch(`${url.origin}/robots.txt`, { signal, accept: "text/plain,*/*;q=0.5" }).then((res) =>
+        robotsFromStatus(res.status, res.status >= 200 && res.status < 300 ? bodyText(res).slice(0, 500_000) : ""),
+      );
+      helpRobots.set(h, r);
+    }
+    return r;
+  };
   const queueKeys = new Map<string, string>(); // canonical key → URL in queue
   // A page named after the brand (Shopify's /pages/saira) is usually the About page.
   const brand = hostKey(start.hostname).split(".")[0].replace(/[^a-z0-9]/g, "");
-  const roleFor = (u: string): PageRole => {
-    const role = classifyRole(u);
+  const roleFor = (u: string, role: PageRole = classifyRole(u)): PageRole => {
+    const host = new URL(u).hostname;
+    if (!hosts.has(hostKey(host))) {
+      // A help-centre subdomain: its front page and articles are the business's FAQs.
+      if (FAQ_SUBDOMAIN.test(hostKey(host)) && (role === "home" || role === "other")) return "faq";
+      if (role === "home") return "other";
+      return role;
+    }
     if (role !== "other") return role;
     const slug = new URL(u).pathname.split("/").filter(Boolean).at(-1)?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
     return slug.length >= 4 && (brand.startsWith(slug) || slug.startsWith(brand)) ? "about" : role;
+  };
+  const isInternalSafe = (u: string) => {
+    try {
+      return isInternal(u);
+    } catch {
+      return false;
+    }
   };
   const enqueue = (u: string, depth: number) => {
     let c: string;
@@ -192,7 +242,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
 
   const fetchPage = async (url: string, depth: number): Promise<PageData | null> => {
     seen.add(canonicalUrl(url));
-    if (!allowedForUs(url)) {
+    if (!isAllowed(await robotsFor(url), OUR_UA_TOKEN, pathOf(url)).allowed) {
       skippedByRobots.push(url);
       return null;
     }
@@ -214,7 +264,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
       depth,
       siteHosts: [...hosts],
     });
-    if (page.role === "other") page.role = roleFor(page.finalUrl);
+    page.role = roleFor(page.finalUrl, page.role);
     if (r.status >= 400) failedFetches.push({ url, status: r.status });
     return page;
   };
@@ -225,7 +275,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
     hosts.add(hostKey(new URL(home.finalUrl).hostname));
     home.role = "home";
     pages.push(home);
-    for (const l of home.links) if (l.internal) enqueue(l.href, 1);
+    for (const l of home.links) if (l.internal || isInternalSafe(l.href)) enqueue(l.href, 1);
   }
   for (const s of sitemapUrls) enqueue(s.loc, 9);
   if (home) {
@@ -247,7 +297,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
     pages.push(page);
     for (const l of page.links) {
       if (DOC_EXT.test(l.href)) documents.push({ url: l.href, from: page.finalUrl, text: l.text });
-      if (l.internal && meta.depth + 1 <= 3) enqueue(l.href, meta.depth + 1);
+      if ((l.internal || isInternalSafe(l.href)) && meta.depth + 1 <= 3) enqueue(l.href, meta.depth + 1);
     }
   }
 
@@ -264,7 +314,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
     while (bfs.length) {
       const p = bfs.shift()!;
       for (const l of p.links) {
-        if (!l.internal) continue;
+        if (!l.internal && !isInternalSafe(l.href)) continue;
         let target: PageData | undefined;
         try {
           target = byUrl.get(canonicalUrl(l.href));
@@ -370,6 +420,7 @@ export async function crawlSite(input: AuditInput, signal: AbortSignal, progress
   return {
     origin,
     hosts: [...hosts],
+    helpHosts: [...helpHosts],
     startedAt: new Date().toISOString(),
     robots: { url: robotsUrl, status: robotsRes.status, body: robotsBody.slice(0, 20_000), parsed: robots, error: robotsRes.error },
     sitemap: { urls: sitemapUrls, sources: sitemapSources, error: sitemapSources.length ? undefined : sitemapError },

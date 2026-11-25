@@ -1,3 +1,4 @@
+import { hostKey } from "@/lib/crawler/extract";
 import { config } from "@/config";
 import { describeDecision, isAllowed, pathOf } from "@/lib/crawler/robots";
 import type { CrawlData, PageData } from "@/lib/crawler/types";
@@ -67,7 +68,8 @@ const c11: CheckImpl = (ctx) => {
   if (unreachable) return unreachable;
   const evidence: Evidence[] = [];
   const problems: string[] = [];
-  const pages = keyPages(crawl);
+  // Help subdomains (support.example.com) have their own robots.txt, so only main-site pages here.
+  const pages = keyPages(crawl).filter((p) => crawl.hosts.includes(hostKey(new URL(p.finalUrl).hostname)));
   const targets = pages.length ? pages.map((p) => p.finalUrl) : [`${crawl.origin}/`];
   const blocked: string[] = [];
   for (const url of targets) {

@@ -84,9 +84,20 @@ describe("verdict validation and aggregation (code decides, not the model)", () 
     expect(validateVerdicts([v("3.2", "fail", [{ url: "https://x.test/", quote: "We are world-class." }]), v("7.1", "fail")], crit, blocks)).toEqual([]);
   });
 
-  it("worst-mode criteria take the worst chunk; best-mode take the best", () => {
+  it("worst-mode criteria judge the site as a whole; best-mode take the best chunk", () => {
     const q = [{ url: "u", quote: "quote one" }];
-    expect(aggregate(CRITERIA["3.2"], [v("3.2", "pass"), v("3.2", "fail", q), v("3.2", "not_applicable")]).status).toBe("fail");
+    // One part of two failing: half the site meets the bar → Partial (not a site-wide Fail).
+    expect(aggregate(CRITERIA["3.2"], [v("3.2", "pass"), v("3.2", "fail", q), v("3.2", "not_applicable")]).status).toBe("partial");
+    // A single reviewed part decides on its own.
+    expect(aggregate(CRITERIA["3.2"], [v("3.2", "fail", q)]).status).toBe("fail");
+    // Most parts fail → Fail, with the problem quoted.
+    const f = aggregate(CRITERIA["3.1"], [v("3.1", "fail", q), v("3.1", "fail"), v("3.1", "pass")]);
+    expect(f.status).toBe("fail");
+    expect(f.quotes).toEqual(q);
+    // One weak page among four → Pass, and the exception is still reported.
+    const p = aggregate(CRITERIA["3.5"], [v("3.5", "pass"), v("3.5", "pass"), v("3.5", "pass"), v("3.5", "fail", q)]);
+    expect(p.status).toBe("pass");
+    expect(p.finding).toMatch(/3 of 4/);
     expect(aggregate(CRITERIA["7.1"], [v("7.1", "fail"), v("7.1", "pass", q)]).status).toBe("pass");
     expect(aggregate(CRITERIA["7.1"], [v("7.1", "not_applicable")]).status).toBe("not_applicable");
   });

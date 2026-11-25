@@ -188,6 +188,8 @@ export interface RenderComparison {
 export interface CrawlData {
   origin: string;
   hosts: string[];
+  /** The business's help/FAQ/docs subdomains that were crawled too (e.g. support.example.com). */
+  helpHosts?: string[];
   startedAt: string;
   robots: { url: string; status: number; body: string; parsed: RobotsTxt; error?: string };
   sitemap: { urls: { loc: string; lastmod?: string }[]; sources: string[]; error?: string };

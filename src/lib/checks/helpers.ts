@@ -1,4 +1,4 @@
-import { KEY_ROLES } from "@/lib/crawler/crawl";
+import { HELP_SUBDOMAIN, KEY_ROLES } from "@/lib/crawler/crawl";
 import { typesOf } from "@/lib/crawler/extract";
 import type { CrawlData, PageData } from "@/lib/crawler/types";
 import type { Evidence } from "@/lib/schemas/check";
@@ -14,7 +14,9 @@ export function fmtBytes(n: number): string {
 export function relPath(url: string): string {
   try {
     const u = new URL(url);
-    return u.pathname + u.search || "/";
+    const path = u.pathname + u.search || "/";
+    // Pages on the business's help subdomain keep their host, so "/" isn't mistaken for the homepage.
+    return HELP_SUBDOMAIN.test(u.hostname.replace(/^www\./, "")) ? `${u.hostname}${path}` : path;
   } catch {
     return url;
   }
@@ -110,16 +112,21 @@ export function sameUrl(a: string, b: string): boolean {
 /** Find the FAQ: a page classified as FAQ, a page with FAQPage schema, or a FAQ-like heading. */
 export function findFaq(crawl: CrawlData): { page: PageData; how: Evidence } | null {
   const pages = okPages(crawl);
-  const byRole = pages.find((p) => p.role === "faq");
-  if (byRole) return { page: byRole, how: ev.url("FAQ page", byRole.finalUrl) };
-  for (const p of pages) {
-    if (p.jsonLd.some((b) => b.nodes.some((n) => typesOf(n).includes("FAQPage")))) return { page: p, how: ev.measure("FAQPage schema found on", relPath(p.finalUrl), p.finalUrl) };
-  }
-  for (const p of pages) {
-    const h = p.headings.find((h) => /frequently asked|\bfaqs?\b|common questions|your questions/i.test(h.text));
-    if (h) return { page: p, how: ev.snippet(`FAQ heading (h${h.level})`, h.text, p.finalUrl) };
-  }
-  return null;
+  const hasFaqSchema = (p: PageData) => p.jsonLd.some((b) => b.nodes.some((n) => typesOf(n).includes("FAQPage")));
+  const faqHeading = (p: PageData) => p.headings.find((h) => /frequently asked|\bfaqs?\b|common questions|your questions/i.test(h.text));
+  // Question headings below the title: the Q&A pairs an AI could lift.
+  const questions = (p: PageData) => p.sections.filter((s) => s.tag !== "h1" && /\?\s*$/.test(s.heading)).length;
+  // Several pages can look like an FAQ (a help-centre front page, a pricing page with an FAQ
+  // section, single help articles). Judge the one with the most questions and answers on it.
+  const candidates = pages
+    .map((p, i) => ({ p, i, role: p.role === "faq", schema: hasFaqSchema(p), heading: faqHeading(p) }))
+    .filter((c) => c.role || c.schema || c.heading)
+    .sort((a, b) => questions(b.p) - questions(a.p) || Number(b.schema) - Number(a.schema) || Number(b.role) - Number(a.role) || a.i - b.i);
+  const best = candidates[0];
+  if (!best) return null;
+  if (best.role) return { page: best.p, how: ev.url("FAQ page", best.p.finalUrl) };
+  if (best.schema) return { page: best.p, how: ev.measure("FAQPage schema found on", relPath(best.p.finalUrl), best.p.finalUrl) };
+  return { page: best.p, how: ev.snippet(`FAQ heading (h${best.heading!.level})`, best.heading!.text, best.p.finalUrl) };
 }
 
 /** Plain sentence listing up to n items, then "and N more". */

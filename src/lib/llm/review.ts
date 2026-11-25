@@ -199,19 +199,46 @@ export async function judgeChunk(opts: {
 const RANK_WORST: Record<VerdictStatus, number> = { fail: 3, partial: 2, pass: 1, not_applicable: 0 };
 const RANK_BEST: Record<VerdictStatus, number> = { pass: 3, partial: 2, fail: 1, not_applicable: 0 };
 
-/** Combine verdicts for one criterion from several chunks. */
+const POINTS: Record<Exclude<VerdictStatus, "not_applicable">, number> = { pass: 1, partial: 0.5, fail: 0 };
+/** "worst" criteria: share of the reviewed parts that must meet the bar for a site-wide Pass / Partial. */
+export const SITE_PASS_SHARE = 0.75;
+export const SITE_PARTIAL_SHARE = 0.4;
+
+/**
+ * Combine verdicts for one criterion from several chunks.
+ *
+ * "best" criteria (something good existing anywhere): the best chunk decides.
+ * "worst" criteria (problems such as preamble or vague copy) judge the site as a whole, the way
+ * each rubric judges a page ("almost all sections…", "most sections…"): every reviewed part
+ * scores Pass 1, Partial ½, Fail 0, and the average decides (≥ 75% Pass, ≥ 40% Partial, else
+ * Fail). One weak page on a large site used to fail the whole site.
+ */
 export function aggregate(criterion: Criterion, verdicts: Verdict[]): Verdict {
-  const rank = criterion.mode === "worst" ? RANK_WORST : RANK_BEST;
   const applicable = verdicts.filter((v) => v.status !== "not_applicable");
   if (!applicable.length) return { id: criterion.id, status: "not_applicable", finding: verdicts[0]?.finding ?? "", quotes: [] };
-  const top = Math.max(...applicable.map((v) => rank[v.status]));
-  const deciding = applicable.filter((v) => rank[v.status] === top);
   const seen = new Set<string>();
-  const quotes = deciding
-    .flatMap((v) => v.quotes)
-    .filter((q) => !seen.has(q.quote) && seen.add(q.quote))
-    .slice(0, 5);
-  return { id: criterion.id, status: deciding[0].status, finding: deciding.map((v) => v.finding).filter(Boolean).slice(0, 2).join(" "), quotes };
+  const quotesOf = (vs: Verdict[]) =>
+    vs
+      .flatMap((v) => v.quotes)
+      .filter((q) => !seen.has(q.quote) && seen.add(q.quote))
+      .slice(0, 5);
+
+  if (criterion.mode === "best" || applicable.length === 1) {
+    const rank = criterion.mode === "worst" ? RANK_WORST : RANK_BEST;
+    const top = Math.max(...applicable.map((v) => rank[v.status]));
+    const deciding = applicable.filter((v) => rank[v.status] === top);
+    return { id: criterion.id, status: deciding[0].status, finding: deciding.map((v) => v.finding).filter(Boolean).slice(0, 2).join(" "), quotes: quotesOf(deciding) };
+  }
+
+  const score = applicable.reduce((t, v) => t + POINTS[v.status as keyof typeof POINTS], 0) / applicable.length;
+  const status: VerdictStatus = score >= SITE_PASS_SHARE ? "pass" : score >= SITE_PARTIAL_SHARE ? "partial" : "fail";
+  const weak = applicable.filter((v) => v.status !== "pass").sort((a, b) => RANK_WORST[b.status] - RANK_WORST[a.status]);
+  const summary = `${applicable.length - weak.length} of ${applicable.length} reviewed parts of the site met this.`;
+  if (status === "pass") {
+    const exceptions = weak.map((v) => v.finding).filter(Boolean).slice(0, 1);
+    return { id: criterion.id, status, finding: [summary, ...exceptions.map((f) => `Exception: ${f}`)].join(" "), quotes: quotesOf(weak) };
+  }
+  return { id: criterion.id, status, finding: [summary, ...weak.map((v) => v.finding).filter(Boolean).slice(0, 2)].join(" "), quotes: quotesOf(weak) };
 }
 
 // ── Running the site review ─────────────────────────────────────────────────
@@ -291,10 +318,12 @@ export async function runSiteReview(opts: {
 
   for (const [id, j] of Object.entries(judgements)) {
     if (errors[id]) {
-      // A failed chunk only matters if it could change the outcome: a Fail on a "worst"
-      // criterion or a Pass on a "best" criterion from another chunk is already conclusive.
+      // A failed chunk only matters if it could change the outcome: a Pass on a "best"
+      // criterion from another chunk is already conclusive.
+      // For "worst" criteria the verdict is an average, so it stands if most parts were judged.
       const partial = collected[id].length ? aggregate(CRITERIA[id], collected[id]) : null;
-      const conclusive = partial && (CRITERIA[id].mode === "worst" ? partial.status === "fail" : partial.status === "pass");
+      const conclusive =
+        partial && (CRITERIA[id].mode === "worst" ? collected[id].length * 2 >= j.chunks : partial.status === "pass");
       if (conclusive) {
         j.verdict = partial;
         j.incomplete = errors[id];

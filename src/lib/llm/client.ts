@@ -95,8 +95,19 @@ export class LlmClient {
     this.maxRetries = opts.maxRetries ?? config.llm.maxRetriesOnInvalidOutput;
   }
 
+  /**
+   * Tokens held back for later stages of the audit (web search judgements, AI visibility), so
+   * a large site's page review can't use the whole budget. The pipeline lowers it stage by stage.
+   */
+  reservedTokens = 0;
+
   get remainingTokens() {
-    return Math.max(0, this.cap - this.usedTokens);
+    return Math.max(0, this.cap - this.usedTokens - this.reservedTokens);
+  }
+
+  /** Hold back a share (0–1) of the whole budget for later stages. */
+  reserveShare(share: number) {
+    this.reservedTokens = Math.floor(this.cap * Math.max(0, Math.min(1, share)));
   }
 
   /**
@@ -110,7 +121,7 @@ export class LlmClient {
     for (let turn = 0; turn < 4; turn++) {
       opts.signal.throwIfAborted();
       const inputEstimate = estimateTokens(JSON.stringify(params.system ?? "").length + JSON.stringify(messages).length) + 15_000; // search results
-      if (this.remainingTokens - inputEstimate < 2_000) throw new LlmBudgetError(this.usedTokens, this.cap);
+      if (this.remainingTokens - inputEstimate < 2_000) throw new LlmBudgetError(this.usedTokens, this.cap - this.reservedTokens);
       const res = await this.transport(
         {
           ...params,
@@ -152,7 +163,7 @@ export class LlmClient {
       const user = feedback ? `${req.user}\n\n${feedback}` : req.user;
       const inputEstimate = estimateTokens(req.system.length + user.length + JSON.stringify(req.jsonSchema).length);
       const outputRoom = this.remainingTokens - inputEstimate;
-      if (outputRoom < 1_500) throw new LlmBudgetError(this.usedTokens, this.cap);
+      if (outputRoom < 1_500) throw new LlmBudgetError(this.usedTokens, this.cap - this.reservedTokens);
       const maxTokens = Math.min(config.llm.maxOutputTokensPerCall, outputRoom);
 
       const res = await this.transport(
