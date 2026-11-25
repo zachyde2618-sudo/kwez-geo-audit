@@ -1,10 +1,10 @@
-/* Hallmark · shape: app screen · genre: modern-minimal · theme: brand · redesign: full · scope: app (form, audit run, report, past audits)
- * theme: brand (by request), the Kwez logo and palette kept · paper: oklch(97.5% 0.009 78) · accent: oklch(55% 0.129 46) · display: Bitter 700 · body: Geist 400/600
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: brand · redesign: rebrand to the 2026 Kwez brand board · scope: app (form, audit run, report, past audits)
+ * theme: brand (by request), see DESIGN.md · paper: #f4f2ee · ink: navy #1a2033 · accent: royal violet #7d26cd · mark: flat cyan/blue/violet/plum/pink · display: Plus Jakarta Sans 700/800 · body: Geist 400/600 · tagline: Barlow Semi Condensed caps
  * nav: kept top bar, the eye alone, its wordmark revealed on hover and focus · signature: the score dial beside the business it scores
  * states: loading (eye loader, running log), empty (no audits, no favourites), error (failed audit, AI review warning, poll lost), full
  * axes: light/slab-serif/warm · posture: Restrained · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H5 E4 S4 R4 V3 · weakest: V, the brand's warm paper and slab serif are kept on purpose; the redesign moves composition instead: forms in a label column, the report led by the dial and a fact list, hairlines in place of nested boxes */
-/* Hallmark · waive 65 · theme: brand, the palette read from public/brand/eye-192.png and the old globals.css tokens · the cream paper, slab display and terracotta are the Kwez brand, kept by the owner's request */
+/* Hallmark · waive 65 · theme: brand, the palette and type taken from the owner's Kwez brand board (2026); swatches read from the board, two mislabelled hex values corrected to the swatch colours */
 /* Hallmark · dropped /audits, #_R_c6inelb_, #_R_cainelb_, #_R_1ceinelb_, #_R_2ceinelb_, #_R_3ceinelb_, #_R_4ceinelb_, #_R_keinelb_, #_R_seinelb_, #_R_2cqinelb_, #_R_4cqinelb_, #_R_kqinelb_, #_R_sqinelb_, #_R_14qinelb_, #_R_1cuinelb_, #_R_2cuinelb_ · the Past audits link moved into NavLinks.tsx and renders on every screen; the 16 form fields remain, checked in the browser, under ids React generates afresh for the new layout */
 /* Hallmark · waive 39b · button.group rows in the category breakdown, 55 to 75px · each row is a whole category (name, checks assessed and its bar) opened as one button, not a control beside an input */
 /* Hallmark · waive 72 · li.rounded-card and details.group offsets of -787px, measured inside collapsed evidence details · checked in the browser at 1440: no text in a to-do card or open category passes its edge, and each keeps 16px of padding */
@@ -20,10 +20,24 @@
 }
 .brand-kwez {
   display: block;
-  aspect-ratio: 522 / 158;
-  background: var(--color-ink);
-  -webkit-mask: url(/brand/kwez.png) left center / contain no-repeat;
-  mask: url(/brand/kwez.png) left center / contain no-repeat;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.75rem;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  color: var(--color-ink);
+}
+.brand-tagline {
+  display: block;
+  margin-top: var(--space-2xs);
+  font-family: var(--font-outlier);
+  font-weight: 600;
+  font-size: 0.625rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-pink-ink);
 }
 .brand-logo-reveal {
   position: absolute;
@@ -53,20 +67,14 @@
   transform: rotate(-12deg) scale(0.96);
 }
 
-/* ── Eye loader: a blink every few seconds and a soft terracotta pulse ── */
+/* ── Eye loader: the eye blinks every few seconds. Flat: no glow, no pulse ── */
 @keyframes eye-blink {
   0%, 84%, 100% { transform: scaleY(1); }
   90% { transform: scaleY(0.1); }
 }
-@keyframes eye-halo {
-  0% { box-shadow: 0 0 0 0 var(--color-halo); }
-  100% { box-shadow: 0 0 0 var(--space-md) var(--color-halo-0); }
-}
-.eye-loader img {
+.eye-loader .eye-mark {
+  transform-origin: 50% 50%;
   animation: eye-blink 2.8s var(--ease-in-out) infinite;
-}
-.eye-loader--halo {
-  animation: eye-halo 1.8s var(--ease-out) infinite;
 }
 
 /* ── Controls ── */
@@ -179,8 +187,7 @@ details > summary::-webkit-details-marker {
   .field-input {
     transition: none;
   }
-  .eye-loader img,
-  .eye-loader--halo {
+  .eye-loader .eye-mark {
     animation: none;
   }
 }

@@ -135,7 +135,7 @@ export function PastAudits({ initial }: { initial: AuditSummary[] }) {
                     title="Start a new audit with the same details"
                     className="inline-flex items-center gap-1.5 rounded-input border border-line px-2.5 py-1.5 text-sm font-semibold hover:border-accent hover:text-accent disabled:opacity-60"
                   >
-                    {busy === a.id ? <EyeLoader size={16} label={null} halo={false} /> : <span aria-hidden>↻</span>}
+                    {busy === a.id ? <EyeLoader size={16} label={null} /> : <span aria-hidden>↻</span>}
                     <span className="hidden sm:inline">Run again</span>
                     <span className="sr-only sm:hidden">Run again</span>
                   </button>

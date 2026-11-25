@@ -14,45 +14,51 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --color-error: oklch(52% 0.19 27);
-  --color-success: oklch(50% 0.12 150);
-  --color-paper: oklch(97.5% 0.009 78);
-  --color-paper-2: oklch(94.6% 0.013 75);
-  --color-paper-3: oklch(99.3% 0.004 78);
-  --color-ink: oklch(21.6% 0.007 67);
-  --color-ink-2: oklch(34% 0.012 64);
-  --color-muted: oklch(50.2% 0.017 64);
-  --color-rule: oklch(91.7% 0.018 73);
-  --color-accent: oklch(55% 0.129 46);
-  --color-accent-ink: oklch(98.5% 0.006 78);
-  --color-focus: oklch(56% 0.19 46);
-  --font-display: var(--font-bitter), "Bitter", Georgia, ui-serif, serif;
+  /* Kwez brand board (2026): flat electric colours on a light paper, dark navy ink. Hex on purpose, matching the board's swatches. */
+  --color-cyan: #00f0ff;
+  --color-blue: #0055d4;
+  --color-violet: #7d26cd;
+  --color-plum: #6b1a6b;
+  --color-pink: #ff1493;
+  --color-navy: #1a2033;
+  --color-pink-ink: #c4006a;
+  --color-error: #c4262e;
+  --color-success: #127a45;
+  --color-paper: #f4f2ee;
+  --color-paper-2: #eae7e1;
+  --color-paper-3: #fdfcfa;
+  --color-ink: var(--color-navy);
+  --color-ink-2: #3a4157;
+  --color-muted: #5c6275;
+  --color-rule: #e1dee3;
+  --color-accent: var(--color-violet);
+  --color-accent-ink: #ffffff;
+  --color-focus: var(--color-blue);
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-outlier: var(--font-body);
+  --font-outlier: var(--font-barlow), "Barlow Semi Condensed", ui-sans-serif, sans-serif-condensed, sans-serif;
   --radius-card: 16px;
   --radius-pill: 999px;
   --shadow-card: none;
-  --tracking-display: -0.02em;
-  /* Kwez brand, kept from the project: the logo's terracotta for decoration, its deeper step for text and controls */
-  --color-brand: oklch(64.4% 0.129 47);
-  --color-accent-strong: oklch(47.8% 0.112 45);
-  --color-accent-soft: oklch(95.7% 0.019 57);
+  --tracking-display: -0.025em;
+  /* brand: decoration only (star, progress, small marks); accent: buttons, links, the current nav item */
+  --color-brand: var(--color-pink);
+  --color-accent-strong: #5c1a9a;
+  --color-accent-soft: #f1e8fb;
   --color-card: var(--color-paper-3);
   --color-line: var(--color-rule);
   --color-ink-soft: var(--color-muted);
-  /* Check results: four states, each a text colour and a quiet fill */
-  --color-pass: oklch(51.3% 0.118 154);
-  --color-pass-soft: oklch(94.9% 0.021 159);
-  --color-partial: oklch(52.2% 0.108 80);
-  --color-partial-soft: oklch(95.9% 0.037 90);
-  --color-fail: oklch(53.6% 0.18 28);
-  --color-fail-soft: oklch(93.9% 0.024 24);
-  --color-unable: oklch(52.8% 0.012 292);
-  --color-unable-soft: oklch(94% 0.004 91);
-  /* Overlays and marks, as tokens so nothing past this block is a literal */
-  --color-halo: oklch(64.4% 0.129 47 / 0.45);
-  --color-halo-0: oklch(64.4% 0.129 47 / 0);
-  --color-hatch: oklch(21.6% 0.007 67 / 0.06);
+  /* Check results: four states, each a text colour and a quiet fill. Kept apart from the brand colours. */
+  --color-pass: #127a45;
+  --color-pass-soft: #e2f3e8;
+  --color-partial: #8a5a00;
+  --color-partial-soft: #fbf0d4;
+  --color-fail: #c4262e;
+  --color-fail-soft: #fce6e6;
+  --color-unable: #5f6170;
+  --color-unable-soft: #e9e8ec;
+  /* Marks */
+  --color-hatch: rgb(26 32 51 / 0.07);
   --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --radius-input: 10px;

@@ -69,7 +69,7 @@ function Progress({ audit, onCancel, cancelling, pollError }: { audit: AuditReco
         {pollError && <span className="text-partial"> Lost contact with the server, retrying…</span>}
       </p>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Checks done" aria-valuemin={0} aria-valuemax={72} aria-valuenow={audit.results.length}>
-        <div className="bar-fill h-full rounded-full bg-linear-to-r from-brand to-accent" style={{ transform: `scaleX(${audit.results.length / 72})` }} />
+        <div className="bar-fill h-full rounded-full bg-accent" style={{ transform: `scaleX(${audit.results.length / 72})` }} />
       </div>
       <ol ref={logRef} className="mt-6 max-h-80 space-y-1.5 overflow-y-auto rounded-card border border-line bg-card p-4 font-mono text-xs">
         {audit.progress.map((p, i) => (

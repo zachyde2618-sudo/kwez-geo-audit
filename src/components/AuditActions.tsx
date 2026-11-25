@@ -52,7 +52,7 @@ export function AuditActions({ id, favourite: initialFavourite }: { id: string; 
         title="Start a new audit with the same details; this one is kept"
         className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-ink-soft hover:border-accent hover:text-accent disabled:opacity-60"
       >
-        {starting ? <EyeLoader size={16} label={null} halo={false} /> : <span aria-hidden>↻</span>}
+        {starting ? <EyeLoader size={16} label={null} /> : <span aria-hidden>↻</span>}
         {starting ? "Starting…" : "Run again"}
       </button>
       {error && <span role="alert" className="text-sm text-fail">{error}</span>}

@@ -227,7 +227,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
         </Field>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={prefill} disabled={!url.trim() || prefilling} className="inline-flex items-center gap-2 rounded-input border border-line px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent disabled:opacity-50">
-            {prefilling && <EyeLoader size={18} label={null} halo={false} />}
+            {prefilling && <EyeLoader size={18} label={null} />}
             {prefilling ? "Reading the website…" : "Fill in details from the website"}
           </button>
           <span className="text-xs text-ink-soft">{prefillError || "Optional. We read the homepage and About page and show you what we found before using it."}</span>
@@ -350,7 +350,7 @@ export function AuditForm({ allowLocal, keysConfigured }: { allowLocal: boolean;
           {formError || "72 checks across 9 categories. Most audits take 1 to 5 minutes."}
         </p>
         <button type="submit" disabled={submitting} aria-busy={submitting || undefined} className="inline-flex min-h-10 items-center justify-center gap-2.5 whitespace-nowrap rounded-input bg-accent px-6 py-2.5 font-semibold text-accent-ink hover:bg-accent-strong">
-          {submitting && <EyeLoader size={20} label={null} halo={false} />}
+          {submitting && <EyeLoader size={20} label={null} />}
           {submitting ? "Starting…" : "Run GEO audit"}
         </button>
       </div>
