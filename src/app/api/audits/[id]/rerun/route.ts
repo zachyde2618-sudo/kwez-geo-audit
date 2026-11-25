@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
-import { rerunAudit } from "@/lib/pipeline";
+import { tooMany } from "@/lib/limits";
+import { AuditLimitError, rerunAudit } from "@/lib/pipeline";
 import { isValidAuditId } from "@/lib/storage";
 
 /** Start a new audit with the same details as this one. The old audit is kept for comparison. */
@@ -11,6 +12,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!rec) return Response.json({ error: "Audit not found" }, { status: 404 });
     return Response.json({ id: rec.id }, { status: 201 });
   } catch (e) {
+    if (e instanceof AuditLimitError) return tooMany(e.message, e.retryAfterSeconds);
     if (e instanceof ZodError) return Response.json({ error: "This audit's details are no longer valid (for example a local address with local targets switched off)." }, { status: 422 });
     throw e;
   }

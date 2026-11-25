@@ -27,6 +27,7 @@ Visual design rules: **`DESIGN.md`** (read it before changing any UI; values liv
 - `ANTHROPIC_API_KEY` (falls back to `KWEZ_ANTHROPIC_API_KEY`; pasted `NAME=`, quotes and `Bearer ` are stripped): AI site review, external judgements, AI visibility tests.
 - `SEARCH_API_KEY` + `SEARCH_API_PROVIDER=serper|brave`: web search stage. Serper's free plan rejects a **quoted** web address in a query.
 - `AI_TOKEN_BUDGET` (default 1,000,000 per audit), `EXTERNAL_FETCH_PAGES` (default 6), `ENABLE_PLAYWRIGHT=true` (check 1.5), `ALLOW_LOCAL_TARGETS=true` (local/fixture audits only), `AUDITS_DIR`, `CACHE_DIR`, model overrides `ANTHROPIC_JUDGE_MODEL` / `ANTHROPIC_VISIBILITY_MODEL`.
+- Protection: `APP_PASSWORD` (+ `APP_USERNAME`, default `kwez`) turns on a browser sign-in for the whole app; `MAX_CONCURRENT_AUDITS` (3), `AUDITS_PER_HOUR` (20).
 - **All model IDs, endpoints, prices and limits live in `src/config.ts` only.**
 - In Claude Code cloud sessions, Node's `fetch` only reaches the internet through the proxy: start the app with `NODE_USE_ENV_PROXY=1`. Not needed in the codespace.
 
@@ -39,6 +40,14 @@ Visual design rules: **`DESIGN.md`** (read it before changing any UI; values liv
 5. **Checks** (`src/lib/checks/catN.ts`, metadata in `catalogue.ts`, rules in `registry.ts`'s `finaliseResult`), then **scoring** (`src/lib/scoring.ts`): code computes the score, never the model. Checks with no implementation are left out of coverage (`notInBuild`).
 
 Pages: `/` landing page, `/audit` the audit form, `/audits` past audits, `/audits/<id>` a report. Other parts: past audits with favourites/delete/run again (`src/lib/storage.ts`, `src/components/PastAudits.tsx`; favourites in `data/audits/_favourites.json`), paste-box parser (`src/lib/paste.ts`), branding (`src/components/Brand.tsx`, tokens in `src/app/tokens.css`, rules in `DESIGN.md`).
+
+## Security and legal (keep these when changing things)
+
+- `src/proxy.ts`: optional password (slows wrong guesses), cross-site request guard for API writes, Content Security Policy with a per-request nonce (the root layout reads `x-nonce` for its one inline script; any new inline script needs `nonce` too). Other headers and noindex in `next.config.ts`; `src/app/robots.ts` disallows all.
+- SSRF guard: `src/lib/crawler/addresses.ts` + `assertPublicTarget` in `fetcher.ts`, checked on every redirect hop and on every Playwright request. `ALLOW_LOCAL_TARGETS` opens loopback only; private networks and cloud metadata are always refused. Every outbound page fetch must go through `politeFetch`.
+- API routes read bodies with `readJsonBody` (JSON only, size-capped) and starting audits is limited in `startAudit` (`src/lib/limits.ts`, `config.security`).
+- `saveAudit` runs `redactSecrets`, so API keys never land in audit files or reach the browser. Never log keys.
+- Legal drafts (templates for a solicitor, placeholders in [brackets]): `/privacy`, `/terms`, `/disclaimer`, linked in the footer; every report ends with a short disclaimer. The app sets no cookies or analytics, so there is no cookie banner: adding any non-essential cookie or analytics needs a consent banner first (UK GDPR/PECR) and a privacy-policy update.
 
 ## Rules to keep
 

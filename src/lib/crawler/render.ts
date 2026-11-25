@@ -1,10 +1,13 @@
 import { createRequire } from "node:module";
 import { config } from "@/config";
+import { assertPublicTarget } from "./fetcher";
 import { normaliseSpace, wordCount } from "./extract";
 import type { RenderComparison } from "./types";
 
 type Browser = { newPage(o?: object): Promise<Page>; close(): Promise<void> };
+type Route = { request(): { url(): string }; abort(): Promise<void>; continue(): Promise<void> };
 type Page = {
+  route(pattern: string, handler: (r: Route) => Promise<void>): Promise<void>;
   goto(url: string, o?: object): Promise<unknown>;
   evaluate<T>(fn: () => T): Promise<T>;
   close(): Promise<void>;
@@ -43,6 +46,22 @@ export async function compareRendered(
       signal.throwIfAborted();
       const page = await browser.newPage({ userAgent: config.crawler.userAgent });
       try {
+        // The browser fetches scripts, images and frames on its own, so every request it makes
+        // passes the same private-address guard as the crawler (and only web protocols).
+        await page.route("**/*", async (route) => {
+          let ok = false;
+          try {
+            const u = new URL(route.request().url());
+            if (u.protocol === "data:" || u.protocol === "blob:") ok = true;
+            else {
+              await assertPublicTarget(u);
+              ok = true;
+            }
+          } catch {
+            ok = false;
+          }
+          await (ok ? route.continue() : route.abort()).catch(() => {});
+        });
         await page.goto(p.url, { waitUntil: "networkidle", timeout: config.crawler.requestTimeoutMs * 2 });
         const rendered = await page.evaluate(() => {
           const root = document.querySelector("main") ?? document.querySelector("article") ?? document.body;

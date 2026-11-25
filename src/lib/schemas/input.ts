@@ -3,6 +3,8 @@ import { z } from "zod";
 const PRIVATE_HOST =
   /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|\[?::1\]?|169\.254\.)/i;
 
+const LOOPBACK_HOST = /^(localhost|[a-z0-9-]+\.localhost|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[::1\])$/;
+
 export function isLocalHost(hostname: string): boolean {
   return PRIVATE_HOST.test(hostname) || hostname.endsWith(".local") || hostname.endsWith(".internal");
 }
@@ -26,6 +28,9 @@ export function normaliseWebsiteUrl(raw: string, allowLocal = false): string | n
   const host = u.hostname.toLowerCase();
   const local = isLocalHost(host);
   if (local && !allowLocal) return null;
+  // ALLOW_LOCAL_TARGETS is for the test site on this machine only: never private networks or
+  // cloud metadata addresses (the crawler refuses those too).
+  if (local && !LOOPBACK_HOST.test(host)) return null;
   if (!local && (!host.includes(".") || /^\d+\.\d+\.\d+\.\d+$/.test(host))) return null;
   if (!local) u.protocol = "https:";
   u.hash = "";

@@ -213,10 +213,26 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
         </div>
         <EvidenceReport results={audit.results} score={s} />
       </section>
+
+      <ReportDisclaimer />
     </div>
   );
 }
 
+/** Shown at the end of every report (and printed with it): scores are estimates, not guarantees. */
+function ReportDisclaimer() {
+  return (
+    <section aria-label="About this report" className="border-t border-line pt-6 text-sm text-ink-soft">
+      <p>
+        <strong className="text-ink">About this report.</strong> The score is Kwez&rsquo;s own estimate of how easily AI assistants can find and
+        describe this business, based on the website and the web on the day of the audit. Some checks are judged by AI, and AI assistants can
+        answer the same question differently from day to day. It is not endorsed by any AI company and does not guarantee mentions, rankings,
+        traffic or sales. It is not legal, financial or security advice.{" "}
+        <Link href="/disclaimer" className="text-accent underline">Read the full disclaimer</Link>.
+      </p>
+    </section>
+  );
+}
 
 /** Model, token use and estimated cost of the AI review (estimates from config prices, not invoices). */
 function AiCostLine({ audit }: { audit: AuditRecord }) {

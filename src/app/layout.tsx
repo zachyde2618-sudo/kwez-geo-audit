@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Barlow_Semi_Condensed, Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { BrandLogo, EyeMark, Wordmark } from "@/components/Brand";
@@ -18,12 +19,14 @@ export const metadata: Metadata = {
   icons: { icon: [{ url: "/brand/kwez-eye.svg", type: "image/svg+xml" }, { url: "/brand/eye-96.png" }], apple: "/brand/eye-192.png" },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Per-request nonce from src/proxy.ts, so this one inline script passes the Content Security Policy.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en-GB" className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} ${barlow.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Marks that scripts run, so motion that starts hidden (the score dial) is only hidden when it can be shown again. */}
-        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
       </head>
       <body className="min-h-full flex flex-col">
         <a href="#main" className="visually-hidden focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-paper">
@@ -64,6 +67,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="border-t border-line">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-xs sm:px-6">
               <p>&copy; 2026 Kwez. Generative Engine Optimisation for UK businesses.</p>
+              <nav aria-label="Legal">
+                <ul className="flex flex-wrap gap-x-5">
+                  <li><Link href="/privacy" className="inline-flex min-h-9 items-center hover:text-accent">Privacy policy</Link></li>
+                  <li><Link href="/terms" className="inline-flex min-h-9 items-center hover:text-accent">Terms of use</Link></li>
+                  <li><Link href="/disclaimer" className="inline-flex min-h-9 items-center hover:text-accent">Audit disclaimer</Link></li>
+                </ul>
+              </nav>
             </div>
           </div>
         </footer>

@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { config } from "@/config";
+import { config, redactSecrets } from "@/config";
 import type { AuditRecord, AuditSummary } from "@/lib/schemas/audit";
 
 const ID_RE = /^[a-z0-9-]{8,64}$/;
@@ -18,7 +18,7 @@ export async function saveAudit(record: AuditRecord): Promise<void> {
   await fs.mkdir(config.storage.auditsDir, { recursive: true });
   const target = fileFor(record.id);
   const tmp = `${target}.${process.pid}.${Date.now()}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(record, null, 2), "utf8");
+  await fs.writeFile(tmp, redactSecrets(JSON.stringify(record, null, 2)), "utf8");
   await fs.rename(tmp, target); // atomic replace
 }
 

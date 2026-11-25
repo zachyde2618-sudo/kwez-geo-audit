@@ -12,6 +12,11 @@ const env = (name: string): string | undefined => {
   return v && v.trim() !== "" ? v.trim() : undefined;
 };
 
+const positiveInt = (v: string | undefined, fallback: number): number => {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+};
+
 export const API_KEY_NAMES = [
   "ANTHROPIC_API_KEY",
   "OPENAI_API_KEY",
@@ -60,6 +65,20 @@ export function cleanKey(value: string): string | undefined {
   }
   return v || undefined;
 }
+/**
+ * Hide API keys in text that is about to be saved or shown (error messages, logs). Covers every
+ * configured key value plus anything shaped like an Anthropic key, so a key can never reach a
+ * browser or a saved audit file even if a provider echoes it back in an error.
+ */
+export function redactSecrets(text: string): string {
+  let out = text;
+  const secrets = [...API_KEY_ENV_VARS.map((n) => env(n)), ...API_KEY_NAMES.map((n) => getKey(n)), env("APP_PASSWORD")]
+    .filter((v): v is string => !!v && v.length >= 8)
+    .sort((a, b) => b.length - a.length);
+  for (const s of new Set(secrets)) out = out.split(s).join("[hidden]");
+  return out.replace(/sk-ant-[A-Za-z0-9_-]{8,}/g, "[hidden]");
+}
+
 export function hasKey(name: ApiKeyName): boolean {
   return getKey(name) !== undefined;
 }
@@ -261,6 +280,32 @@ export const config = {
   priority: {
     impact: { High: 3, Medium: 2, Low: 1 },
     effort: { "Quick win": 1, Moderate: 2, Major: 3 },
+  },
+
+  /** Protection against abuse and runaway API bills. Override the numbers with env vars. */
+  security: {
+    /**
+     * Password for the whole app (browser sign-in box). Strongly recommended as soon as the app is
+     * reachable by anyone else, because every audit spends money on API calls. Unset = no password.
+     */
+    get appPassword() {
+      return env("APP_PASSWORD");
+    },
+    get appUsername() {
+      return env("APP_USERNAME") ?? "kwez";
+    },
+    /** Audits (new or "run again") that may run at the same time. */
+    get maxConcurrentAudits() {
+      return positiveInt(env("MAX_CONCURRENT_AUDITS"), 3);
+    },
+    /** Audits that may be started per hour, from everyone together. */
+    get auditsPerHour() {
+      return positiveInt(env("AUDITS_PER_HOUR"), 20);
+    },
+    /** Website "fill in for me" lookups per minute, per visitor. */
+    prefillPerMinute: 10,
+    /** Largest request body the API accepts (the audit form is a few KB). */
+    maxBodyBytes: 64 * 1024,
   },
 
   storage: {

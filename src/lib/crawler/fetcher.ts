@@ -2,6 +2,7 @@ import { promises as dns } from "node:dns";
 import net from "node:net";
 import { config } from "@/config";
 import { isLocalHost } from "@/lib/schemas/input";
+import { addressKind, isLoopbackName, isPrivateName, type AddressKind } from "./addresses";
 import type { FetchResult } from "./types";
 
 /**
@@ -38,32 +39,33 @@ async function acquireSlot(host: string, signal?: AbortSignal): Promise<void> {
   setTimeout(release, minIntervalFor(host));
 }
 
-function isPrivateIp(ip: string): boolean {
-  if (net.isIPv4(ip)) {
-    const [a, b] = ip.split(".").map(Number);
-    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
-  }
-  const v = ip.toLowerCase();
-  return v === "::1" || v === "::" || v.startsWith("fc") || v.startsWith("fd") || v.startsWith("fe80") || v.startsWith("::ffff:127.") || v.startsWith("::ffff:10.") || v.startsWith("::ffff:192.168.");
-}
-
 export class BlockedTargetError extends Error {}
 
-async function assertPublicTarget(url: URL): Promise<void> {
+/**
+ * SSRF guard: refuse anything that isn't the public internet. Loopback (the test site) is
+ * allowed only with ALLOW_LOCAL_TARGETS=true; private networks and cloud metadata never are.
+ * Exported so the Playwright renderer can apply the same rule to every request a page makes.
+ */
+export async function assertPublicTarget(url: URL): Promise<void> {
   if (url.protocol !== "http:" && url.protocol !== "https:") throw new BlockedTargetError(`Unsupported protocol ${url.protocol}`);
+  if (url.username || url.password) throw new BlockedTargetError("Refusing a web address with a username or password in it");
   const host = url.hostname.replace(/^\[|\]$/g, "");
   const allowLocal = config.crawler.allowLocalTargets;
-  if (isLocalHost(host)) {
-    if (allowLocal) return;
-    throw new BlockedTargetError(`Refusing to fetch private address ${host}`);
-  }
-  if (net.isIP(host)) {
-    if (isPrivateIp(host) && !allowLocal) throw new BlockedTargetError(`Refusing to fetch private address ${host}`);
-    return;
-  }
+  const refuse = (why: string) => new BlockedTargetError(why);
+  const judge = (kind: AddressKind, what: string) => {
+    if (kind === "public") return;
+    if (kind === "loopback" && allowLocal) return;
+    throw refuse(`Refusing to fetch private address ${what}`);
+  };
+  if (net.isIP(host)) return judge(addressKind(host), host);
+  if (isLoopbackName(host)) return judge("loopback", host);
+  if (isPrivateName(host)) throw refuse(`Refusing to fetch private address ${host}`);
   try {
     const addrs = await dns.lookup(host, { all: true });
-    if (!allowLocal && addrs.some((a) => isPrivateIp(a.address))) throw new BlockedTargetError(`${host} resolves to a private address`);
+    for (const a of addrs) {
+      const kind = addressKind(a.address);
+      if (kind !== "public" && !(kind === "loopback" && allowLocal)) throw refuse(`${host} resolves to a private address`);
+    }
   } catch (e) {
     if (e instanceof BlockedTargetError) throw e;
     // Behind an HTTPS proxy local DNS may be unavailable; the proxy resolves instead.

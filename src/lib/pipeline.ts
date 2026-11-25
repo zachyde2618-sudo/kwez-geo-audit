@@ -13,6 +13,7 @@ import { runExternalReview, type ExternalData } from "@/lib/llm/external";
 import { runVisibility } from "@/lib/visibility/run";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import { parseAuditInput, type AuditInput } from "@/lib/schemas/input";
+import { takeToken } from "@/lib/limits";
 import { computeScore } from "@/lib/scoring";
 import { deleteAuditFile, listAudits, loadAudit, saveAudit } from "@/lib/storage";
 
@@ -64,8 +65,26 @@ export function newAuditRecord(input: AuditInput): AuditRecord {
   };
 }
 
+/** Thrown when starting another audit now would go over the limits in `config.security`. */
+export class AuditLimitError extends Error {
+  constructor(
+    message: string,
+    readonly retryAfterSeconds: number,
+  ) {
+    super(message);
+  }
+}
+
 /** Create, persist and start an audit in the background. Returns the record. */
 export async function startAudit(input: AuditInput): Promise<AuditRecord> {
+  // Every audit spends money on API calls, so cap how many run at once and per hour.
+  if (jobs.size >= config.security.maxConcurrentAudits) {
+    throw new AuditLimitError(`${jobs.size === 1 ? "An audit is" : `${jobs.size} audits are`} already running. Please wait for one to finish, then try again.`, 30);
+  }
+  const wait = takeToken("audits:start", config.security.auditsPerHour, 3_600_000);
+  if (wait) {
+    throw new AuditLimitError(`The limit of ${config.security.auditsPerHour} audits an hour has been reached. Try again in about ${Math.ceil(wait / 60)} minutes.`, wait);
+  }
   const record = newAuditRecord(input);
   await saveAudit(record);
   const ctl = new AbortController();

@@ -68,12 +68,10 @@ export function ScoreGauge({ score, coverage, mini = false, label = "GEO Visibil
   return (
     <div className={`${mini ? "inline-block" : "flex flex-col items-center"} ${pending ? "gauge-pending" : ""}`}>
       <div
-        role="meter"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={score ?? undefined}
-        aria-valuetext={valueText}
+        // A meter needs a value; an unscored dial is announced as a picture with its label instead.
+        {...(score == null
+          ? { role: "img", "aria-label": `${label}: ${valueText}` }
+          : { role: "meter", "aria-label": label, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": score, "aria-valuetext": valueText })}
         className="relative"
         style={{ width: size, height: size }}
         data-testid={mini ? undefined : "score-gauge"}
