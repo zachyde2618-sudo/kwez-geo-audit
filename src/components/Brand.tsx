@@ -31,9 +31,9 @@ export function EyeMark({ size = 36, label, className = "" }: { size?: number; l
 /** The "kwez" wordmark and its pink tagline. */
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
-    <span className={`flex flex-col justify-center ${className}`}>
+    <span className={`brand-wordmark ${className}`}>
       <span className="brand-kwez">kwez</span>
-      <span className="brand-tagline">Generative Engine Optimisation</span>
+      <span className="brand-tagline">Generative Engine Optimization</span>
     </span>
   );
 }
@@ -45,9 +45,9 @@ export function Wordmark({ className = "" }: { className?: string }) {
 export function BrandLogo() {
   return (
     <Link href="/" aria-label="Kwez GEO Audit, home" className="brand-logo group flex items-center rounded-full">
-      <EyeMark size={40} className="brand-logo-eye" />
+      <EyeMark size={52} />
       <span className="brand-logo-reveal" aria-hidden>
-        <Wordmark className="pl-2.5 pr-1" />
+        <Wordmark className="pl-2 pr-1" />
       </span>
     </Link>
   );

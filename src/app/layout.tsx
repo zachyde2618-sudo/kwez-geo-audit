@@ -37,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" className="flex-1">{children}</main>
         <footer className="no-print border-t border-line text-sm text-ink-soft">
           <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-6 sm:px-6">
-            <EyeMark size={40} />
+            <EyeMark size={52} />
             <Wordmark />
             <p className="ml-auto hidden text-right leading-snug sm:block">
               GEO Audit

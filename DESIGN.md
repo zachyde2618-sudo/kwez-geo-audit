@@ -43,14 +43,15 @@ colors:
 typography:
   wordmark:
     fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
-    fontWeight: 800
-    letterSpacing: -0.045em
+    fontWeight: 600
+    letterSpacing: 0.005em
     case: lowercase ("kwez")
   tagline:
     fontFamily: "Barlow Semi Condensed, sans-serif"
-    fontWeight: 600
-    letterSpacing: 0.12em
+    fontWeight: 500
+    letterSpacing: 0.06em
     case: uppercase
+    width: "same as the kwez wordmark"
     color: "{colors.pink-ink}"
   display:
     fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
@@ -83,7 +84,7 @@ rounded:
 spacing: [2px, 4px, 8px, 12px, 16px, 24px, 40px, 64px, 96px]
 
 components:
-  logo: { mark: "EyeMark (inline SVG, src/components/Brand.tsx; file public/brand/kwez-eye.svg)", header: "eye alone; the kwez wordmark and tagline slide out on hover or focus" }
+  logo: { mark: "EyeMark (inline SVG, src/components/Brand.tsx; file public/brand/kwez-eye.svg)", header: "eye alone; the kwez lockup slides out on hover or focus", reference: "docs/brand/kwez-lockup.png" }
   button-primary: { background: accent, text: accent-ink, rounded: input, minHeight: 40px, weight: 600, hover: accent-strong }
   button-secondary: { background: paper-3, border: rule, text: ink, rounded: input, minHeight: 40px, hover: "border accent, text accent" }
   nav-link: { text: muted, rounded: pill, current: "accent-soft fill, accent-strong text" }
@@ -133,7 +134,9 @@ Reference systems from that collection are kept in `docs/design-references/`
 
 - Plus Jakarta Sans (bold geometric sans) for the "kwez" wordmark and all
   headings. Geist for everything else, including buttons and labels.
-- The tagline is all caps in Barlow Semi Condensed, pink.
+- The tagline "GENERATIVE ENGINE OPTIMIZATION" (with a z, as in the lockup) is all caps
+  in Barlow Semi Condensed, deep pink, exactly as wide as "kwez" above it.
+  Body copy keeps British spelling ("optimisation").
 - Numbers that line up (scores, counts, coverage) use `tabular-nums`.
 - Monospace is for code and file paths, not for sentences or scores.
 - British spelling and sentence case everywhere ("Run GEO audit").
@@ -162,9 +165,10 @@ Reference systems from that collection are kept in `docs/design-references/`
   separated by a hairline.
 - **Chips**: pill, `text-xs` or `text-sm`, soft fill plus strong text.
 - **Logo** (`Brand.tsx`): `EyeMark` is the flat SVG eye; `BrandLogo` shows
-  the eye alone in the header, and the "kwez" wordmark with its tagline slides
-  out of it on hover or keyboard focus. The footer shows eye and wordmark.
-  The home page shows a large eye beside the headline on desktop.
+  the eye alone in the header, and the lockup (a large medium-weight navy
+  "kwez" with the pink tagline under it, matching
+  `docs/brand/kwez-lockup.png`) slides out of it on hover or keyboard focus.
+  The eye does not move or rotate. The footer shows eye and wordmark.
 - **Eye loader** (`Brand.tsx`): the only loading indicator. The eye blinks; it
   never spins, glows or pulses.
 

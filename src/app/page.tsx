@@ -1,6 +1,5 @@
 import { API_KEY_NAMES, config, hasKey } from "@/config";
 import { AuditForm } from "@/components/AuditForm";
-import { EyeMark } from "@/components/Brand";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +8,7 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
       <div className="mb-10 grid gap-x-10 gap-y-4 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
-        <div aria-hidden className="hidden items-start md:flex">
-          <EyeMark size={176} />
-        </div>
+        <div aria-hidden className="hidden md:block" />
         <div>
           <h1 className="max-w-[26ch] text-3xl sm:text-4xl">Will AI assistants recommend this business to someone who&rsquo;s never heard of it?</h1>
           <p className="mt-4 max-w-[60ch] text-lg text-ink-soft">

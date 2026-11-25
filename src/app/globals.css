@@ -18,23 +18,29 @@
 .brand-logo {
   position: relative;
 }
+.brand-wordmark {
+  display: inline-grid;
+  width: max-content;
+}
 .brand-kwez {
   display: block;
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.75rem;
-  line-height: 0.9;
-  letter-spacing: -0.045em;
+  font-weight: 600;
+  font-size: 2.75rem;
+  line-height: 0.82;
+  letter-spacing: 0.005em;
   color: var(--color-ink);
 }
 .brand-tagline {
   display: block;
-  margin-top: var(--space-2xs);
+  width: 0;
+  min-width: 100%;
+  margin-top: 0.35rem;
   font-family: var(--font-outlier);
-  font-weight: 600;
-  font-size: 0.625rem;
+  font-weight: 500;
+  font-size: 0.40625rem;
   line-height: 1;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--color-pink-ink);
@@ -56,17 +62,6 @@
   clip-path: inset(0 0 0 0);
   transform: none;
 }
-.brand-logo-eye {
-  transition: transform var(--dur-long) var(--ease-out);
-}
-.brand-logo:hover .brand-logo-eye,
-.brand-logo:focus-visible .brand-logo-eye {
-  transform: rotate(-12deg);
-}
-.brand-logo:active .brand-logo-eye {
-  transform: rotate(-12deg) scale(0.96);
-}
-
 /* ── Eye loader: the eye blinks every few seconds. Flat: no glow, no pulse ── */
 @keyframes eye-blink {
   0%, 84%, 100% { transform: scaleY(1); }
@@ -179,7 +174,6 @@ details > summary::-webkit-details-marker {
 
 @media (prefers-reduced-motion: reduce) {
   .brand-logo-reveal,
-  .brand-logo-eye,
   .bar-fill,
   button,
   summary,
