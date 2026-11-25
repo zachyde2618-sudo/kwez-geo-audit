@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Barlow_Semi_Condensed, Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { BrandLogo, EyeMark, Wordmark } from "@/components/Brand";
 import { NavLinks } from "@/components/NavLinks";
@@ -29,21 +30,41 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <header className="no-print sticky top-0 z-20 border-b border-line bg-paper">
-          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <BrandLogo />
             <NavLinks />
           </div>
         </header>
         <main id="main" className="flex-1">{children}</main>
-        <footer className="no-print border-t border-line text-sm text-ink-soft">
-          <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-6 sm:px-6">
-            <EyeMark size={52} />
-            <Wordmark />
-            <p className="ml-auto hidden text-right leading-snug sm:block">
-              GEO Audit
-              <br />
-              For UK businesses
-            </p>
+        <footer className="no-print border-t border-line bg-paper-3 text-sm text-ink-soft">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))]">
+            <div>
+              <Link href="/" aria-label="Kwez, home" className="inline-flex items-center gap-2">
+                <EyeMark size={52} />
+                <Wordmark />
+              </Link>
+              <p className="mt-4 max-w-[34ch]">Helping UK businesses get found, trusted and recommended by AI assistants.</p>
+            </div>
+            <nav aria-label="The tool">
+              <p className="font-semibold text-ink">The tool</p>
+              <ul className="mt-3 space-y-2">
+                <li><Link href="/audit" className="hover:text-accent">New audit</Link></li>
+                <li><Link href="/audits" className="hover:text-accent">Past audits</Link></li>
+              </ul>
+            </nav>
+            <nav aria-label="Learn more">
+              <p className="font-semibold text-ink">Learn more</p>
+              <ul className="mt-3 space-y-2">
+                <li><Link href="/#how" className="hover:text-accent">How it works</Link></li>
+                <li><Link href="/#checks" className="hover:text-accent">What we check</Link></li>
+                <li><Link href="/#faq" className="hover:text-accent">Questions</Link></li>
+              </ul>
+            </nav>
+          </div>
+          <div className="border-t border-line">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-xs sm:px-6">
+              <p>&copy; 2026 Kwez. Generative Engine Optimisation for UK businesses.</p>
+            </div>
           </div>
         </footer>
       </body>

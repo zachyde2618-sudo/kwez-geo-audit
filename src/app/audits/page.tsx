@@ -11,7 +11,7 @@ export default async function PastAuditsPage() {
       <h1 className="text-2xl font-bold tracking-tight">Past audits</h1>
       {audits.length === 0 ? (
         <p className="mt-4 text-ink-soft">
-          No audits yet. <Link href="/" className="text-accent underline">Run your first one</Link>.
+          No audits yet. <Link href="/audit" className="text-accent underline">Run your first one</Link>.
         </p>
       ) : (
         <PastAudits initial={audits} />

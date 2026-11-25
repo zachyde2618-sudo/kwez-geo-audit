@@ -143,6 +143,17 @@ Reference systems from that collection are kept in `docs/design-references/`
 
 ## 4. Layout
 
+- **Pages:** `/` is the landing page (hero with a report preview, the
+  assistants we test, the audit in numbers, how it works, the nine
+  categories, a navy "What you get" band, FAQ, a closing call to action).
+  `/audit` is the tool (the audit form). `/audits` lists past audits and
+  `/audits/<id>` is a report. The menu is How it works, Past audits and one
+  filled "New audit" button.
+- Landing sections: a small pink all-caps label above a large heading,
+  `max-w-6xl`, generous vertical space (80 to 112px), cards with 16px
+  corners on `paper-3`, at most one dark navy band per page. Only use facts
+  the tool really delivers: no invented testimonials, prices or user counts.
+
 - Content width `max-w-5xl` (about 1024px) with 16px side gutters on phones.
 - Forms: a label column (section title and one line of help) beside the
   fields on desktop, stacked on phones. Sections separated by hairlines, not

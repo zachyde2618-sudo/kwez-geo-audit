@@ -91,7 +91,7 @@ function Ended({ audit }: { audit: AuditRecord }) {
     <div className="mx-auto max-w-2xl px-4 sm:px-6 py-14">
       <h1 className="text-2xl font-bold tracking-tight">{audit.status === "cancelled" ? "Audit cancelled" : "The audit didn't finish"}</h1>
       <p className="mt-2 text-ink-soft">{audit.error ?? `The audit of ${audit.domain} was stopped before it finished.`}</p>
-      <Link href="/" className="btn mt-6 inline-flex min-h-10 items-center whitespace-nowrap rounded-input bg-accent px-5 py-2 font-semibold text-accent-ink hover:bg-accent-strong">Start a new audit</Link>
+      <Link href="/audit" className="btn mt-6 inline-flex min-h-10 items-center whitespace-nowrap rounded-input bg-accent px-5 py-2 font-semibold text-accent-ink hover:bg-accent-strong">Start a new audit</Link>
     </div>
   );
 }
