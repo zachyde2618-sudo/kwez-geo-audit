@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "restart": "node scripts/restart.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

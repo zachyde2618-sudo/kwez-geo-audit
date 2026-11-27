@@ -13,7 +13,8 @@ Visual design rules: **`DESIGN.md`** (read it before changing any UI; values liv
 - The owner is not a developer. Explain in plain English, give **one command per code block**, say which terminal to run it in, and never tell them to paste keys into chat.
 - They run the app in a **GitHub Codespace on the `phase-4-llm-checks` branch** (all current work is on that branch; `main` is old). Deliver work by committing and pushing to that branch, then tell them to `git pull` and restart the app.
 - Common trip-ups seen before: pressing Ctrl+C right after starting the app (it stops it); typing commands into the terminal that is running the app; a second old dev server still on port 3000; a stale `.next` cache serving old CSS (`rm -rf .next`); a new codespace opening on `main`; the codespace secret for the Anthropic key saved as `NAME=value` (the app now strips that).
-- `.devcontainer/devcontainer.json` installs packages and starts the app automatically when the codespace opens.
+- `.devcontainer/devcontainer.json` installs packages and starts the app automatically when the codespace opens (with `npm run restart`).
+- **`npm run restart`** (`scripts/restart.mjs`) is the one fix for "the app won't open": it stops every old copy of the app (Next 16 refuses to start a second `next dev` while one is running), clears `.next`, and starts it with `ALLOW_LOCAL_TARGETS=true`. Tell the owner to use it instead of `npm run dev`.
 
 ## Run and test
 

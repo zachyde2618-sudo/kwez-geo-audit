@@ -9,7 +9,7 @@
   "updateContentCommand": "npm install",
   // Runs in a terminal each time you open the codespace, so the app is just there.
   "postAttachCommand": {
-    "app": "ALLOW_LOCAL_TARGETS=true npm run dev"
+    "app": "npm run restart"
   },
   "forwardPorts": [3000],
   "portsAttributes": {
