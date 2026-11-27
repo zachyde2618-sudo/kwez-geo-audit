@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { auditedOn } from "@/lib/format";
 import type { AuditRecord } from "@/lib/schemas/audit";
 import type { VisibilityData } from "@/lib/visibility/run";
-import { formatScoreLine } from "@/lib/scoring";
+import { BAND_SUMMARY, formatScoreLine } from "@/lib/scoring";
 import { buildTodo } from "@/lib/todo";
 import { AuditActions } from "./AuditActions";
 import { EyeLoader } from "./Brand";
@@ -96,13 +96,6 @@ function Ended({ audit }: { audit: AuditRecord }) {
   );
 }
 
-const BAND_SUMMARY: Record<string, string> = {
-  "Low visibility": "AI assistants are unlikely to find or recommend this business yet.",
-  Developing: "AI assistants can find this business, but clear gaps are holding it back.",
-  Good: "This business is well placed for AI discovery, with some improvements left.",
-  Excellent: "This business is in strong shape for AI discovery.",
-};
-
 function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean }) {
   const s = audit.score!;
   const todo = useMemo(() => buildTodo(audit.results), [audit.results]);
@@ -152,7 +145,7 @@ function Results({ audit, favourite }: { audit: AuditRecord; favourite: boolean 
               </dd>
               <AiCostLine audit={audit} />
             </dl>
-            <AuditActions id={audit.id} favourite={favourite} />
+            <AuditActions id={audit.id} favourite={favourite} report={{ name, score: s.overall, band: s.band }} />
           </div>
           <AiReviewWarning audit={audit} />
           <div className="space-y-3 border-t border-line pt-5">

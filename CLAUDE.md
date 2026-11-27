@@ -41,6 +41,8 @@ Visual design rules: **`DESIGN.md`** (read it before changing any UI; values liv
 
 Pages: `/` landing page, `/audit` the audit form, `/audits` past audits, `/audits/<id>` a report. Other parts: past audits with favourites/delete/run again (`src/lib/storage.ts`, `src/components/PastAudits.tsx`; favourites in `data/audits/_favourites.json`), paste-box parser (`src/lib/paste.ts`), branding (`src/components/Brand.tsx`, tokens in `src/app/tokens.css`, rules in `DESIGN.md`).
 
+Client PDF: `GET /api/audits/<id>/pdf` (`?view=1` opens it in the browser) draws a branded A4 report with `@react-pdf/renderer` (`src/lib/pdf/report.tsx`, colours copied from tokens.css in `src/lib/pdf/theme.ts`, brand fonts as WOFF in `assets/fonts`). It leaves out internal bits (AI cost, "add ANTHROPIC_API_KEY" notes). The report page's "Download PDF" and "Send to client" buttons are in `src/components/ReportShare.tsx`: sending opens the device's share sheet with the PDF attached, or else downloads it and opens a ready-written email (`src/lib/share.ts`). Never set `lineHeight` on a react-pdf `Page` (it hides the page numbers).
+
 ## Security and legal (keep these when changing things)
 
 - `src/proxy.ts`: optional password (slows wrong guesses), cross-site request guard for API writes, Content Security Policy with a per-request nonce (the root layout reads `x-nonce` for its one inline script; any new inline script needs `nonce` too). Other headers and noindex in `next.config.ts`; `src/app/robots.ts` disallows all.
@@ -62,4 +64,4 @@ Pages: `/` landing page, `/audit` the audit form, `/audits` past audits, `/audit
 
 - Check 2.1 (page speed, needs a free Google PageSpeed API key) is the only unimplemented check.
 - ChatGPT, Perplexity and Gemini in the visibility tests (each needs its own API key; give each provider a configurable base URL).
-- A client-ready report (branded PDF or share link), proper hosting off the codespace, and merging `phase-4-llm-checks` into `main`.
+- A shareable web link to a report (needs proper hosting first), proper hosting off the codespace, and merging `phase-4-llm-checks` into `main`. The branded PDF is built.

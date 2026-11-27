@@ -13,6 +13,14 @@ export function bandFor(score: number): Band {
   return "Low visibility";
 }
 
+/** One plain-English sentence per band, shown under the score (report page and PDF). */
+export const BAND_SUMMARY: Record<Band, string> = {
+  "Low visibility": "AI assistants are unlikely to find or recommend this business yet.",
+  Developing: "AI assistants can find this business, but clear gaps are holding it back.",
+  Good: "This business is well placed for AI discovery, with some improvements left.",
+  Excellent: "This business is in strong shape for AI discovery.",
+};
+
 export interface CategoryScore {
   categoryId: number;
   /** 0–100, unrounded; null when no check in the category was assessable. */

@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EyeLoader } from "./Brand";
+import { ReportShare, type ReportShareProps } from "./ReportShare";
 import { useHydrated } from "./useHydrated";
 
-/** Favourite and run-again buttons on an audit's results page. */
-export function AuditActions({ id, favourite: initialFavourite }: { id: string; favourite: boolean }) {
+/** Favourite, run-again, PDF and send buttons on an audit's results page. */
+export function AuditActions({ id, favourite: initialFavourite, report }: { id: string; favourite: boolean; report?: Omit<ReportShareProps, "id"> }) {
   const router = useRouter();
   const ready = useHydrated();
   const [favourite, setFavourite] = useState(initialFavourite);
@@ -55,6 +56,7 @@ export function AuditActions({ id, favourite: initialFavourite }: { id: string; 
         {starting ? <EyeLoader size={16} label={null} /> : <span aria-hidden>↻</span>}
         {starting ? "Starting…" : "Run again"}
       </button>
+      {report && <ReportShare id={id} {...report} />}
       {error && <span role="alert" className="text-sm text-fail">{error}</span>}
     </div>
   );
